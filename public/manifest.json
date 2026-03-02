@@ -1,0 +1,22 @@
+{
+  "short_name": "ProzinHS",
+  "name": "PROZIN_HOTSPOT Manager",
+  "icons": [
+    {
+      "src": "https://picsum.photos/seed/mikrotik/192/192",
+      "type": "image/png",
+      "sizes": "192x192"
+    },
+    {
+      "src": "https://picsum.photos/seed/mikrotik/512/512",
+      "type": "image/png",
+      "sizes": "512x512"
+    }
+  ],
+  "start_url": "/",
+  "background_color": "#0a0a0a",
+  "display": "standalone",
+  "scope": "/",
+  "theme_color": "#10b981",
+  "description": "Gerenciador de Vouchers Mikrotik Hotspot"
+}

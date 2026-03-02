@@ -1,0 +1,5 @@
+{
+  "name": "PROZIN-HOTSPOT-2",
+  "description": "Gerenciador de usuários para Mikrotik Hotspot focado em criação em massa sem senha.",
+  "requestFramePermissions": []
+}
