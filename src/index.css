@@ -1,9 +1,8 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Cormorant+Garamond:ital,wght@1,400;1,500;1,600;1,700&family=JetBrains+Mono:wght@400;500&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap');
 @import "tailwindcss";
 
 @theme {
   --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
-  --font-serif: "Cormorant Garamond", serif;
   --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, monospace;
   
   --color-bg: #0A0A0A;
@@ -14,16 +13,5 @@
 }
 
 @layer base {
-  body {
-    @apply antialiased bg-bg text-ink;
-  }
-  
-  select {
-    @apply bg-surface text-ink border-line;
-  }
-  
-  select option {
-    background-color: #161616 !important;
-    color: #FFFFFF !important;
-  }
+  body { @apply antialiased bg-bg text-ink; }
 }
