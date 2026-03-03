@@ -358,8 +358,14 @@ export default function App() {
                       value={config.host}
                       onChange={e => setConfig({...config, host: e.target.value})}
                       className="w-full bg-zinc-800 text-white px-3 py-2 rounded border border-white/5 focus:outline-none focus:ring-2 focus:ring-accent transition-all font-mono text-sm"
+                      placeholder="IP ou DNS Cloud"
                       required
                     />
+                    {(config.host.toLowerCase().startsWith('fd') || config.host.toLowerCase().startsWith('fe') || config.host.startsWith('192.168') || config.host.startsWith('10.')) && (
+                      <p className="text-[8px] text-orange-500 mt-1 uppercase font-bold tracking-tighter animate-pulse">
+                        ⚠️ IP Local detectado. Use o DNS Cloud (IP para Cloud) para acesso remoto.
+                      </p>
+                    )}
                   </div>
                   <div className="flex justify-end">
                     <div className="w-24 space-y-1">
@@ -427,13 +433,20 @@ export default function App() {
                   className="w-full border border-white/10 text-[10px] font-bold uppercase tracking-widest py-3 hover:bg-white/5 transition-all flex items-center justify-center gap-2 disabled:opacity-30"
                 >
                   {loading ? <RefreshCw className="animate-spin" size={12} /> : <Wifi size={12} />}
-                  Testar Conexão (Porta 8728)
+                  Testar Conexão (Porta {port})
                 </button>
 
                 {testResult && (
-                  <div className={`p-3 text-[9px] uppercase font-bold tracking-widest border flex items-center gap-2 ${testResult.success ? 'bg-accent/10 border-accent text-accent' : 'bg-red-950/30 border-red-900 text-red-500'}`}>
-                    {testResult.success ? <ShieldCheck size={14} /> : <ShieldAlert size={14} />}
-                    {testResult.message}
+                  <div className={`p-3 text-[9px] uppercase font-bold tracking-widest border flex flex-col gap-2 ${testResult.success ? 'bg-accent/10 border-accent text-accent' : 'bg-red-950/30 border-red-900 text-red-500'}`}>
+                    <div className="flex items-center gap-2">
+                      {testResult.success ? <ShieldCheck size={14} /> : <ShieldAlert size={14} />}
+                      <span>{testResult.message}</span>
+                    </div>
+                    {!testResult.success && (testResult.message.includes('IPv6') || testResult.message.includes('ENETUNREACH') || testResult.message.includes('suporta')) && (
+                      <div className="bg-black/40 p-2 rounded text-[8px] normal-case font-normal opacity-80">
+                        Dica: O Railway não suporta IPv6. Ative o 'IP para Cloud' no Mikrotik e use o 'DNS Name' no campo acima.
+                      </div>
+                    )}
                   </div>
                 )}
               </div>
@@ -684,12 +697,82 @@ export default function App() {
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -20 }}
             >
-              <div className="mb-12">
-                <h2 className="font-serif italic text-4xl mb-2">PPP (PPPoE)</h2>
-                <p className="opacity-40 text-sm">Gerenciamento de conexões PPPoE.</p>
+              <div className="flex justify-between items-end mb-12">
+                <div>
+                  <h2 className="font-serif italic text-4xl mb-2">PPP (PPPoE)</h2>
+                  <p className="opacity-40 text-sm">Gerenciamento de conexões PPPoE e IPv6.</p>
+                </div>
+                <div className="flex gap-4">
+                  <button 
+                    onClick={async () => {
+                      if (!window.confirm("Isso irá configurar o DHCPv6 Client na ether1 e o perfil default para usar o pool 'pool-pppoe'. Continuar?")) return;
+                      setLoading(true);
+                      try {
+                        const res = await fetch('/api/mikrotik/setup-ipv6-pppoe', {
+                          method: 'POST',
+                          headers: { 'Content-Type': 'application/json' },
+                          body: JSON.stringify(config)
+                        });
+                        const data = await res.json();
+                        if (data.success) alert("IPv6 configurado com sucesso no perfil default!");
+                        else alert("Erro: " + data.message);
+                      } catch (e) {
+                        alert("Erro de conexão");
+                      } finally {
+                        setLoading(false);
+                      }
+                    }}
+                    className="flex items-center gap-2 bg-accent/10 text-accent border border-accent/20 px-4 py-2 rounded-lg text-xs font-bold uppercase tracking-widest hover:bg-accent hover:text-black transition-all"
+                  >
+                    <Network size={16} /> Configurar IPv6
+                  </button>
+                  <button 
+                    onClick={() => fetchData(true)}
+                    className="p-2 border border-line hover:bg-white/5 transition-colors rounded-lg text-accent"
+                  >
+                    <RefreshCw size={18} className={loading ? 'animate-spin' : ''} />
+                  </button>
+                </div>
               </div>
-              <div className="p-12 border border-line bg-white/5 text-center opacity-40 italic">
-                Módulo PPP em desenvolvimento. Em breve você poderá gerenciar seus clientes de fibra/rádio.
+              
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12">
+                <div className="p-6 border border-line bg-surface">
+                  <div className="text-[10px] uppercase font-bold tracking-widest opacity-40 mb-2">Clientes Ativos</div>
+                  <div className="text-3xl font-serif italic text-accent">{users.length}</div>
+                </div>
+                <div className="p-6 border border-line bg-surface">
+                  <div className="text-[10px] uppercase font-bold tracking-widest opacity-40 mb-2">Pool IPv6</div>
+                  <div className="text-xs font-mono opacity-60 truncate">pool-pppoe (PD /64)</div>
+                </div>
+                <div className="p-6 border border-line bg-surface">
+                  <div className="text-[10px] uppercase font-bold tracking-widest opacity-40 mb-2">Status Starlink</div>
+                  <div className="text-xs text-accent font-bold uppercase tracking-widest">Conectado</div>
+                </div>
+              </div>
+
+              <div className="border border-line bg-surface overflow-x-auto">
+                <div className="min-w-[600px]">
+                  <div className="grid grid-cols-[1.5fr_1fr_1fr_1fr] p-4 border-b border-line bg-white/5">
+                    <span className="text-[10px] uppercase font-bold tracking-widest opacity-40">Usuário PPPoE</span>
+                    <span className="text-[10px] uppercase font-bold tracking-widest opacity-40">Endereço IP</span>
+                    <span className="text-[10px] uppercase font-bold tracking-widest opacity-40">Uptime</span>
+                    <span className="text-[10px] uppercase font-bold tracking-widest opacity-40 text-right">Serviço</span>
+                  </div>
+                  <div className="divide-y divide-line">
+                    {users.length === 0 ? (
+                      <div className="p-12 text-center opacity-20 italic">Nenhum cliente PPPoE ativo no momento.</div>
+                    ) : (
+                      users.map((user, idx) => (
+                        <div key={idx} className="grid grid-cols-[1.5fr_1fr_1fr_1fr] p-4 items-center hover:bg-white/5 transition-all group">
+                          <span className="font-mono font-bold text-accent truncate">{user.name}</span>
+                          <span className="text-sm opacity-60 truncate">{user.address || '---'}</span>
+                          <span className="text-sm opacity-60 font-mono truncate">{user.uptime || '0s'}</span>
+                          <span className="text-[10px] uppercase font-bold opacity-40 text-right">pppoe</span>
+                        </div>
+                      ))
+                    )}
+                  </div>
+                </div>
               </div>
             </motion.div>
           )}
