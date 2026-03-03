@@ -109,6 +109,14 @@ export default function App() {
   const [voucherTemplateType, setVoucherTemplateType] = useState('standard');
   const [voucherImage, setVoucherImage] = useState<string | null>(null);
   const [systemLogo, setSystemLogo] = useState<string | null>(() => localStorage.getItem('system_logo'));
+  const [detectedIP, setDetectedIP] = useState<string | null>(null);
+  
+  useEffect(() => {
+    fetch('/api/utils/my-ip')
+      .then(res => res.json())
+      .then(data => setDetectedIP(data.ip))
+      .catch(() => {});
+  }, []);
   
   useEffect(() => {
     localStorage.setItem('outlet_name', outletName);
@@ -198,10 +206,11 @@ export default function App() {
         setActiveTab('dashboard');
         fetchData(true);
       } else {
-        setError(data.message);
+        // Show the specific error from Mikrotik
+        setError(data.message || 'Erro desconhecido ao conectar ao Mikrotik.');
       }
     } catch (err) {
-      setError('Falha ao conectar ao servidor backend.');
+      setError('Não foi possível alcançar o servidor do App. Verifique sua internet ou se o servidor está rodando.');
     } finally {
       setLoading(false);
     }
@@ -401,7 +410,38 @@ export default function App() {
               {error && (
                 <div className="p-3 bg-red-950/30 text-red-500 text-[10px] font-bold uppercase tracking-widest border border-red-900/50 flex items-center gap-2">
                   <ShieldAlert size={14} />
-                  {error}
+                  <div className="flex-1">
+                    {error}
+                    {error.includes('192.168') && (
+                      <p className="mt-2 text-[8px] opacity-60 normal-case">Dica: IPs 192.168.x.x são locais. Use o IPv6 ou DNS Cloud para acesso remoto.</p>
+                    )}
+                  </div>
+                </div>
+              )}
+
+              <div className="flex flex-col gap-4">
+                <button 
+                  type="button"
+                  onClick={handleTestPort}
+                  disabled={loading}
+                  className="w-full border border-white/10 text-[10px] font-bold uppercase tracking-widest py-3 hover:bg-white/5 transition-all flex items-center justify-center gap-2 disabled:opacity-30"
+                >
+                  {loading ? <RefreshCw className="animate-spin" size={12} /> : <Wifi size={12} />}
+                  Testar Conexão (Porta 8728)
+                </button>
+
+                {testResult && (
+                  <div className={`p-3 text-[9px] uppercase font-bold tracking-widest border flex items-center gap-2 ${testResult.success ? 'bg-accent/10 border-accent text-accent' : 'bg-red-950/30 border-red-900 text-red-500'}`}>
+                    {testResult.success ? <ShieldCheck size={14} /> : <ShieldAlert size={14} />}
+                    {testResult.message}
+                  </div>
+                )}
+              </div>
+
+              {detectedIP && (
+                <div className="text-center">
+                  <p className="text-[9px] uppercase tracking-widest opacity-30">Seu IP Detectado:</p>
+                  <p className="text-[10px] font-mono text-accent/60 mt-1">{detectedIP}</p>
                 </div>
               )}
             </form>
