@@ -1,5 +1,4 @@
 import express from "express";
-import { createServer as createViteServer } from "vite";
 import { RouterOSAPI } from "node-routeros";
 import cors from "cors";
 import path from "path";
@@ -166,19 +165,24 @@ async function startServer() {
 
   if (!isProduction) {
     console.log("[DEBUG] Iniciando em modo DESENVOLVIMENTO (Vite)...");
-    const vite = await createViteServer({
-      server: { middlewareMode: true, allowedHosts: true },
-      appType: "spa",
-    });
-    app.use(vite.middlewares);
-    app.use("*", async (req, res, next) => {
-      const url = req.originalUrl;
-      try {
-        let template = fs.readFileSync(path.resolve(__dirname, "index.html"), "utf-8");
-        template = await vite.transformIndexHtml(url, template);
-        res.status(200).set({ "Content-Type": "text/html" }).end(template);
-      } catch (e) { vite.ssrFixStacktrace(e as Error); next(e); }
-    });
+    try {
+      const { createServer: createViteServer } = await import("vite");
+      const vite = await createViteServer({
+        server: { middlewareMode: true, allowedHosts: true },
+        appType: "spa",
+      });
+      app.use(vite.middlewares);
+      app.use("*", async (req, res, next) => {
+        const url = req.originalUrl;
+        try {
+          let template = fs.readFileSync(path.resolve(__dirname, "index.html"), "utf-8");
+          template = await vite.transformIndexHtml(url, template);
+          res.status(200).set({ "Content-Type": "text/html" }).end(template);
+        } catch (e) { vite.ssrFixStacktrace(e as Error); next(e); }
+      });
+    } catch (e) {
+      console.error("Erro ao carregar o Vite. Certifique-se de que as devDependencies estão instaladas ou que você está em modo produção.");
+    }
   } else {
     console.log("[DEBUG] Iniciando em modo PRODUÇÃO (Static)...");
     app.use(express.static(distPath));
@@ -186,7 +190,7 @@ async function startServer() {
       if (fs.existsSync(path.resolve(distPath, "index.html"))) {
         res.sendFile(path.resolve(distPath, "index.html"));
       } else {
-        res.status(500).send("Pasta 'dist' não encontrada. Execute 'npm run build'.");
+        res.status(500).send("Pasta 'dist' não encontrada. Execute 'npm run build' antes de iniciar.");
       }
     });
   }
