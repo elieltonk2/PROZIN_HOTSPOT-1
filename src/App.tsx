@@ -374,18 +374,18 @@ export default function App() {
         <motion.div 
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          className="w-full max-w-lg bg-zinc-950 border border-accent/20 p-8 shadow-2xl relative overflow-hidden"
+          className="w-full max-lg bg-zinc-950 border border-primary/20 p-8 shadow-2xl relative overflow-hidden"
         >
-          <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-accent to-transparent opacity-50" />
+          <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-primary to-transparent opacity-50" />
           
           <div className="flex flex-col items-center text-center space-y-6">
-            <div className="p-4 bg-accent/10 rounded-full text-accent">
+            <div className="p-4 bg-primary/10 rounded-full text-primary">
               <Rocket size={48} />
             </div>
             
             <div className="space-y-2">
               <h1 className="font-serif italic text-4xl text-white">Bem-vindo ao PROZIN</h1>
-              <p className="text-accent/60 uppercase tracking-widest text-[10px] font-bold">Sistema de Gestão Mikrotik Hotspot</p>
+              <p className="text-primary/60 uppercase tracking-widest text-[10px] font-bold">Sistema de Gestão Mikrotik Hotspot</p>
             </div>
 
             <div className="bg-white/5 p-6 rounded-xl text-left space-y-4 border border-white/5">
@@ -395,19 +395,19 @@ export default function App() {
               </p>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="flex items-start gap-3">
-                  <div className="mt-1 text-accent"><ShieldCheck size={14} /></div>
+                  <div className="mt-1 text-primary"><ShieldCheck size={14} /></div>
                   <div className="text-[11px] opacity-60">Geração de vouchers em massa com um clique.</div>
                 </div>
                 <div className="flex items-start gap-3">
-                  <div className="mt-1 text-accent"><Network size={14} /></div>
+                  <div className="mt-1 text-primary"><Network size={14} /></div>
                   <div className="text-[11px] opacity-60">Configuração automática de IPv6 para PPPoE.</div>
                 </div>
                 <div className="flex items-start gap-3">
-                  <div className="mt-1 text-accent"><Lock size={14} /></div>
+                  <div className="mt-1 text-primary"><Lock size={14} /></div>
                   <div className="text-[11px] opacity-60">Segurança local: seus dados ficam no seu navegador.</div>
                 </div>
                 <div className="flex items-start gap-3">
-                  <div className="mt-1 text-accent"><Wifi size={14} /></div>
+                  <div className="mt-1 text-primary"><Wifi size={14} /></div>
                   <div className="text-[11px] opacity-60">Acesso remoto via IPv6 ou Túnel VPN.</div>
                 </div>
               </div>
@@ -415,7 +415,7 @@ export default function App() {
 
             <button 
               onClick={closeWelcome}
-              className="w-full bg-accent text-black py-4 font-bold uppercase tracking-[0.2em] text-sm hover:opacity-90 transition-all"
+              className="w-full bg-primary text-black py-4 font-bold uppercase tracking-[0.2em] text-sm hover:opacity-90 transition-all"
             >
               COMEÇAR AGORA
             </button>
@@ -434,7 +434,7 @@ export default function App() {
           className="w-full max-w-md bg-zinc-950 border border-white/5 p-8 shadow-2xl text-center"
         >
           <div className="flex justify-center mb-6">
-            <div className="p-4 bg-zinc-900 rounded-full text-accent">
+            <div className="p-4 bg-zinc-900 rounded-full text-primary">
               <Lock size={40} />
             </div>
           </div>
@@ -448,14 +448,14 @@ export default function App() {
                 type={showPin ? "text" : "password"}
                 value={pinInput}
                 onChange={e => setPinInput(e.target.value)}
-                className="w-full bg-zinc-900 border-b-2 border-accent/20 py-4 text-center text-2xl tracking-[0.5em] focus:outline-none focus:border-accent transition-all font-mono"
+                className="w-full bg-zinc-900 border-b-2 border-primary/20 py-4 text-center text-2xl tracking-[0.5em] focus:outline-none focus:border-primary transition-all font-mono"
                 placeholder="****"
                 autoFocus
               />
               <button 
                 type="button"
                 onClick={() => setShowPin(!showPin)}
-                className="absolute right-0 top-1/2 -translate-y-1/2 p-2 text-zinc-500 hover:text-accent"
+                className="absolute right-0 top-1/2 -translate-y-1/2 p-2 text-zinc-500 hover:text-primary"
               >
                 {showPin ? <EyeOff size={18} /> : <Eye size={18} />}
               </button>
@@ -465,7 +465,7 @@ export default function App() {
 
             <button 
               type="submit"
-              className="w-full bg-accent text-black py-4 font-bold uppercase tracking-widest text-sm hover:opacity-90 transition-all"
+              className="w-full bg-primary text-black py-4 font-bold uppercase tracking-widest text-sm hover:opacity-90 transition-all"
             >
               DESBLOQUEAR
             </button>
@@ -484,9 +484,9 @@ export default function App() {
           className="w-full max-w-md bg-zinc-950 shadow-2xl overflow-hidden border border-white/5"
         >
           {/* Header */}
-          <div className="bg-zinc-950 p-3 flex items-center justify-between text-accent shadow-lg border-b border-accent/20">
+          <div className="bg-zinc-950 p-3 flex items-center justify-between text-primary shadow-lg border-b border-primary/20">
             <div className="flex items-center gap-2">
-              <ShieldCheck size={16} className="text-accent" />
+              <ShieldCheck size={16} className="text-primary" />
               <span className="font-bold text-sm tracking-tight uppercase">{outletName}</span>
             </div>
             <button className="hover:bg-white/10 p-1 rounded transition-colors text-zinc-400">
@@ -506,17 +506,17 @@ export default function App() {
             <form onSubmit={handleConnect} className="space-y-8">
               {/* Connection Row */}
               <div className="flex items-start gap-6">
-                <div className="p-3 bg-zinc-900 rounded-lg text-accent/50 border border-white/5">
+                <div className="p-3 bg-zinc-900 rounded-lg text-primary/50 border border-white/5">
                   <Plug size={32} />
                 </div>
                 <div className="flex-1 space-y-4">
                   <div className="space-y-1">
-                    <label className="text-[10px] font-bold text-accent/70 uppercase tracking-widest">Conectar a :</label>
+                    <label className="text-[10px] font-bold text-primary/70 uppercase tracking-widest">Conectar a :</label>
                     <input 
                       type="text" 
                       value={config.host}
                       onChange={e => setConfig({...config, host: e.target.value})}
-                      className="w-full bg-zinc-800 text-white px-3 py-2 rounded border border-white/5 focus:outline-none focus:ring-2 focus:ring-accent transition-all font-mono text-sm"
+                      className="w-full bg-zinc-800 text-white px-3 py-2 rounded border border-white/5 focus:outline-none focus:ring-2 focus:ring-primary transition-all font-mono text-sm"
                       placeholder="IP ou DNS Cloud"
                       required
                     />
@@ -532,7 +532,7 @@ export default function App() {
                         type="text" 
                         value={config.port}
                         onChange={e => setConfig({...config, port: e.target.value})}
-                        className="w-full bg-zinc-800 text-white px-3 py-2 rounded border border-white/5 text-right focus:outline-none focus:ring-2 focus:ring-accent transition-all font-mono text-sm"
+                        className="w-full bg-zinc-800 text-white px-3 py-2 rounded border border-white/5 text-right focus:outline-none focus:ring-2 focus:ring-primary transition-all font-mono text-sm"
                       />
                     </div>
                   </div>
@@ -541,16 +541,16 @@ export default function App() {
 
               {/* Login Row */}
               <div className="flex items-center gap-6">
-                <div className="p-3 bg-zinc-900 rounded-lg text-accent/50 border border-white/5">
+                <div className="p-3 bg-zinc-900 rounded-lg text-primary/50 border border-white/5">
                   <User size={32} />
                 </div>
                 <div className="flex-1 space-y-1">
-                  <label className="text-[10px] font-bold text-accent/70 uppercase tracking-widest">Usuário :</label>
+                  <label className="text-[10px] font-bold text-primary/70 uppercase tracking-widest">Usuário :</label>
                   <input 
                     type="text" 
                     value={config.user}
                     onChange={e => setConfig({...config, user: e.target.value})}
-                    className="w-full bg-zinc-800 text-white px-3 py-2 rounded border border-white/5 focus:outline-none focus:ring-2 focus:ring-accent transition-all font-mono text-sm"
+                    className="w-full bg-zinc-800 text-white px-3 py-2 rounded border border-white/5 focus:outline-none focus:ring-2 focus:ring-primary transition-all font-mono text-sm"
                     required
                   />
                 </div>
@@ -558,16 +558,16 @@ export default function App() {
 
               {/* Password Row */}
               <div className="flex items-center gap-6">
-                <div className="p-3 bg-zinc-900 rounded-lg text-accent/50 border border-white/5">
+                <div className="p-3 bg-zinc-900 rounded-lg text-primary/50 border border-white/5">
                   <Key size={32} />
                 </div>
                 <div className="flex-1 space-y-1">
-                  <label className="text-[10px] font-bold text-accent/70 uppercase tracking-widest">Senha :</label>
+                  <label className="text-[10px] font-bold text-primary/70 uppercase tracking-widest">Senha :</label>
                   <input 
                     type="password" 
                     value={config.password}
                     onChange={e => setConfig({...config, password: e.target.value})}
-                    className="w-full bg-zinc-800 text-white px-3 py-2 rounded border border-white/5 focus:outline-none focus:ring-2 focus:ring-accent transition-all font-mono text-sm"
+                    className="w-full bg-zinc-800 text-white px-3 py-2 rounded border border-white/5 focus:outline-none focus:ring-2 focus:ring-primary transition-all font-mono text-sm"
                   />
                 </div>
               </div>
@@ -596,7 +596,7 @@ export default function App() {
                 </button>
 
                 {testResult && (
-                  <div className={`p-3 text-[9px] uppercase font-bold tracking-widest border flex flex-col gap-2 ${testResult.success ? 'bg-accent/10 border-accent text-accent' : 'bg-red-950/30 border-red-900 text-red-500'}`}>
+                  <div className={`p-3 text-[9px] uppercase font-bold tracking-widest border flex flex-col gap-2 ${testResult.success ? 'bg-primary/10 border-primary text-primary' : 'bg-red-950/30 border-red-900 text-red-500'}`}>
                     <div className="flex items-center gap-2">
                       {testResult.success ? <ShieldCheck size={14} /> : <ShieldAlert size={14} />}
                       <span>{testResult.message}</span>
@@ -613,7 +613,7 @@ export default function App() {
               {detectedIP && (
                 <div className="text-center">
                   <p className="text-[9px] uppercase tracking-widest opacity-30">Seu IP Detectado:</p>
-                  <p className="text-[10px] font-mono text-accent/60 mt-1">{detectedIP}</p>
+                  <p className="text-[10px] font-mono text-primary/60 mt-1">{detectedIP}</p>
                 </div>
               )}
             </form>
@@ -623,7 +623,7 @@ export default function App() {
           <button 
             onClick={() => handleConnect()}
             disabled={loading}
-            className="w-full bg-accent text-black py-5 font-bold uppercase tracking-[0.3em] text-sm hover:opacity-90 active:scale-[0.98] transition-all flex items-center justify-center gap-3 disabled:opacity-50 border-t border-accent/20"
+            className="w-full bg-primary text-black py-5 font-bold uppercase tracking-[0.3em] text-sm hover:opacity-90 active:scale-[0.98] transition-all flex items-center justify-center gap-3 disabled:opacity-50 border-t border-primary/20"
           >
             {loading ? <RefreshCw className="animate-spin" size={18} /> : 'ENTRAR'}
           </button>
@@ -633,16 +633,16 @@ export default function App() {
   }
 
   return (
-    <div className="min-h-screen bg-black text-zinc-300 font-sans selection:bg-accent selection:text-black">
+    <div className="min-h-screen bg-black text-zinc-300 font-sans selection:bg-primary selection:text-black">
       {/* Mobile Header */}
       <div className="lg:hidden fixed top-0 left-0 w-full bg-zinc-950 border-b border-white/5 p-4 flex items-center justify-between z-30">
         <div className="flex items-center gap-3">
           <Logo size={32} src={systemLogo} />
-          <h1 className="font-serif italic text-lg font-bold text-accent truncate max-w-[150px] uppercase tracking-tight">{outletName}</h1>
+          <h1 className="font-serif italic text-lg font-bold text-primary truncate max-w-[150px] uppercase tracking-tight">{outletName}</h1>
         </div>
         <button 
           onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-          className="p-2 text-accent hover:bg-white/5 transition-all rounded"
+          className="p-2 text-primary hover:bg-white/5 transition-all rounded"
         >
           {isMobileMenuOpen ? <X size={24} /> : <LayoutDashboard size={24} />}
         </button>
@@ -665,8 +665,8 @@ export default function App() {
       <div className={`fixed left-0 top-0 h-full w-64 border-r border-white/5 bg-zinc-950 z-50 transition-transform duration-300 lg:translate-x-0 ${isMobileMenuOpen ? 'translate-x-0' : '-translate-x-full'}`}>
         <div className="p-8 border-b border-white/5 flex flex-col items-center text-center">
           <Logo size={64} className="mb-4" src={systemLogo} />
-          <h1 className="font-serif italic text-xl font-bold tracking-tight text-accent truncate w-full uppercase">{outletName}</h1>
-          <p className="text-[10px] uppercase tracking-widest opacity-40 mt-1 text-accent/50">Mikrotik Hotspot Manager</p>
+          <h1 className="font-serif italic text-xl font-bold tracking-tight text-primary truncate w-full uppercase">{outletName}</h1>
+          <p className="text-[10px] uppercase tracking-widest opacity-40 mt-1 text-primary/50">Mikrotik Hotspot Manager</p>
         </div>
 
         <nav className="mt-8 overflow-y-auto max-h-[calc(100vh-300px)]">
@@ -677,7 +677,7 @@ export default function App() {
                   setActiveTab('dashboard');
                   setIsMobileMenuOpen(false);
                 }}
-                className={`w-full flex items-center gap-4 px-8 py-4 text-sm font-medium transition-all ${activeTab === 'dashboard' ? 'bg-accent text-black' : 'hover:bg-white/5 opacity-40 hover:opacity-100'}`}
+                className={`w-full flex items-center gap-4 px-8 py-4 text-sm font-medium transition-all ${activeTab === 'dashboard' ? 'bg-primary text-black' : 'hover:bg-white/5 opacity-40 hover:opacity-100'}`}
               >
                 <LayoutDashboard size={18} />
                 Dashboard
@@ -687,7 +687,7 @@ export default function App() {
                   setActiveTab('generator');
                   setIsMobileMenuOpen(false);
                 }}
-                className={`w-full flex items-center gap-4 px-8 py-4 text-sm font-medium transition-all ${activeTab === 'generator' ? 'bg-accent text-black' : 'hover:bg-white/5 opacity-40 hover:opacity-100'}`}
+                className={`w-full flex items-center gap-4 px-8 py-4 text-sm font-medium transition-all ${activeTab === 'generator' ? 'bg-primary text-black' : 'hover:bg-white/5 opacity-40 hover:opacity-100'}`}
               >
                 <PlusCircle size={18} />
                 Gerador de Vouchers
@@ -697,7 +697,7 @@ export default function App() {
                   setActiveTab('hotspot');
                   setIsMobileMenuOpen(false);
                 }}
-                className={`w-full flex items-center gap-4 px-8 py-4 text-sm font-medium transition-all ${activeTab === 'hotspot' ? 'bg-accent text-black' : 'hover:bg-white/5 opacity-40 hover:opacity-100'}`}
+                className={`w-full flex items-center gap-4 px-8 py-4 text-sm font-medium transition-all ${activeTab === 'hotspot' ? 'bg-primary text-black' : 'hover:bg-white/5 opacity-40 hover:opacity-100'}`}
               >
                 <Wifi size={18} />
                 Hotspot
@@ -707,7 +707,7 @@ export default function App() {
                   setActiveTab('ppp');
                   setIsMobileMenuOpen(false);
                 }}
-                className={`w-full flex items-center gap-4 px-8 py-4 text-sm font-medium transition-all ${activeTab === 'ppp' ? 'bg-accent text-black' : 'hover:bg-white/5 opacity-40 hover:opacity-100'}`}
+                className={`w-full flex items-center gap-4 px-8 py-4 text-sm font-medium transition-all ${activeTab === 'ppp' ? 'bg-primary text-black' : 'hover:bg-white/5 opacity-40 hover:opacity-100'}`}
               >
                 <Network size={18} />
                 PPP
@@ -720,7 +720,7 @@ export default function App() {
               setActiveTab('settings');
               setIsMobileMenuOpen(false);
             }}
-            className={`w-full flex items-center gap-4 px-8 py-4 text-sm font-medium transition-all ${activeTab === 'settings' ? 'bg-accent text-black' : 'hover:bg-white/5 opacity-40 hover:opacity-100'}`}
+            className={`w-full flex items-center gap-4 px-8 py-4 text-sm font-medium transition-all ${activeTab === 'settings' ? 'bg-primary text-black' : 'hover:bg-white/5 opacity-40 hover:opacity-100'}`}
           >
             <Settings size={18} />
             Configurações
@@ -732,7 +732,7 @@ export default function App() {
                 setActiveTab('logs');
                 setIsMobileMenuOpen(false);
               }}
-              className={`w-full flex items-center gap-4 px-8 py-4 text-sm font-medium transition-all ${activeTab === 'logs' ? 'bg-accent text-black' : 'hover:bg-white/5 opacity-40 hover:opacity-100'}`}
+              className={`w-full flex items-center gap-4 px-8 py-4 text-sm font-medium transition-all ${activeTab === 'logs' ? 'bg-primary text-black' : 'hover:bg-white/5 opacity-40 hover:opacity-100'}`}
             >
               <FileText size={18} />
               Logs
@@ -744,7 +744,7 @@ export default function App() {
               setActiveTab('about');
               setIsMobileMenuOpen(false);
             }}
-            className={`w-full flex items-center gap-4 px-8 py-4 text-sm font-medium transition-all ${activeTab === 'about' ? 'bg-accent text-black' : 'hover:bg-white/5 opacity-40 hover:opacity-100'}`}
+            className={`w-full flex items-center gap-4 px-8 py-4 text-sm font-medium transition-all ${activeTab === 'about' ? 'bg-primary text-black' : 'hover:bg-white/5 opacity-40 hover:opacity-100'}`}
           >
             <Info size={18} />
             Sobre
@@ -752,15 +752,15 @@ export default function App() {
         </nav>
 
         <div className="absolute bottom-0 w-full p-8 border-t border-white/5">
-          <div className="mb-4 p-3 bg-accent/5 border border-accent/10 rounded-lg">
+          <div className="mb-4 p-3 bg-primary/5 border border-primary/10 rounded-lg">
             <div className="flex items-center gap-2 mb-1">
-              <RefreshCw size={10} className="text-accent animate-pulse" />
-              <span className="text-[9px] uppercase font-bold tracking-widest text-accent">Cloud Active</span>
+              <RefreshCw size={10} className="text-primary animate-pulse" />
+              <span className="text-[9px] uppercase font-bold tracking-widest text-primary">Cloud Active</span>
             </div>
-            <p className="text-[9px] opacity-40 truncate text-accent/50">Host: {config.host}</p>
+            <p className="text-[9px] opacity-40 truncate text-primary/50">Host: {config.host}</p>
           </div>
           <div className="flex items-center gap-3">
-            <div className={`w-2 h-2 rounded-full ${isConnected ? 'bg-accent shadow-[0_0_8px_rgba(16,185,129,0.5)]' : 'bg-red-500'}`} />
+            <div className={`w-2 h-2 rounded-full ${isConnected ? 'bg-primary shadow-[0_0_8px_rgba(16,185,129,0.5)]' : 'bg-red-500'}`} />
             <span className="text-[10px] uppercase font-bold tracking-widest opacity-40">
               {isConnected ? 'Conectado' : 'Desconectado'}
             </span>
@@ -775,7 +775,7 @@ export default function App() {
             <div className="flex gap-4">
               <button 
                 onClick={() => window.print()}
-                className="bg-accent text-black px-6 py-2 font-bold uppercase tracking-widest text-xs flex items-center gap-2 hover:opacity-90 transition-opacity"
+                className="bg-primary text-black px-6 py-2 font-bold uppercase tracking-widest text-xs flex items-center gap-2 hover:opacity-90 transition-opacity"
               >
                 <Printer size={16} /> Imprimir
               </button>
@@ -801,7 +801,7 @@ export default function App() {
                       genColor === 'blue' ? 'bg-blue-500' : 
                       genColor === 'red' ? 'bg-red-500' : 
                       genColor === 'amber' ? 'bg-amber-500' : 
-                      genColor === 'purple' ? 'bg-purple-500' : 'bg-accent'
+                      genColor === 'purple' ? 'bg-purple-500' : 'bg-primary'
                     }`} />
                   )}
                   
@@ -814,7 +814,7 @@ export default function App() {
                       {parseInt(genLimitBytes) > 0 ? ` • ${genLimitBytes}MB` : ''}
                     </div>
                     {genPrice && (
-                      <div className="mt-2 text-[11px] font-bold text-accent print:text-black">
+                      <div className="mt-2 text-[11px] font-bold text-primary print:text-black">
                         {genPrice}
                       </div>
                     )}
@@ -881,13 +881,13 @@ export default function App() {
                         setLoading(false);
                       }
                     }}
-                    className="flex items-center gap-2 bg-accent/10 text-accent border border-accent/20 px-4 py-2 rounded-lg text-xs font-bold uppercase tracking-widest hover:bg-accent hover:text-black transition-all"
+                    className="flex items-center gap-2 bg-primary/10 text-primary border border-primary/20 px-4 py-2 rounded-lg text-xs font-bold uppercase tracking-widest hover:bg-primary hover:text-black transition-all"
                   >
                     <Network size={16} /> Configurar IPv6
                   </button>
                   <button 
                     onClick={() => fetchData(true)}
-                    className="p-2 border border-line hover:bg-white/5 transition-colors rounded-lg text-accent"
+                    className="p-2 border border-line hover:bg-white/5 transition-colors rounded-lg text-primary"
                   >
                     <RefreshCw size={18} className={loading ? 'animate-spin' : ''} />
                   </button>
@@ -897,7 +897,7 @@ export default function App() {
               <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12">
                 <div className="p-6 border border-line bg-surface">
                   <div className="text-[10px] uppercase font-bold tracking-widest opacity-40 mb-2">Clientes Ativos</div>
-                  <div className="text-3xl font-serif italic text-accent">{users.length}</div>
+                  <div className="text-3xl font-serif italic text-primary">{users.length}</div>
                 </div>
                 <div className="p-6 border border-line bg-surface">
                   <div className="text-[10px] uppercase font-bold tracking-widest opacity-40 mb-2">Pool IPv6</div>
@@ -905,7 +905,7 @@ export default function App() {
                 </div>
                 <div className="p-6 border border-line bg-surface">
                   <div className="text-[10px] uppercase font-bold tracking-widest opacity-40 mb-2">Status Starlink</div>
-                  <div className="text-xs text-accent font-bold uppercase tracking-widest">Conectado</div>
+                  <div className="text-xs text-primary font-bold uppercase tracking-widest">Conectado</div>
                 </div>
               </div>
 
@@ -923,7 +923,7 @@ export default function App() {
                     ) : (
                       users.map((user, idx) => (
                         <div key={idx} className="grid grid-cols-[1.5fr_1fr_1fr_1fr] p-4 items-center hover:bg-white/5 transition-all group">
-                          <span className="font-mono font-bold text-accent truncate">{user.name}</span>
+                          <span className="font-mono font-bold text-primary truncate">{user.name}</span>
                           <span className="text-sm opacity-60 truncate">{user.address || '---'}</span>
                           <span className="text-sm opacity-60 font-mono truncate">{user.uptime || '0s'}</span>
                           <span className="text-[10px] uppercase font-bold opacity-40 text-right">pppoe</span>
@@ -968,21 +968,21 @@ export default function App() {
               
               <div className="space-y-8">
                 <div className="p-8 border border-line bg-white/5">
-                  <h3 className="font-bold uppercase tracking-widest text-xs mb-4 text-accent">Verificação de Acesso Remoto</h3>
+                  <h3 className="font-bold uppercase tracking-widest text-xs mb-4 text-primary">Verificação de Acesso Remoto</h3>
                   <p className="text-sm opacity-60 leading-relaxed mb-4">
                     Você mencionou que não tem certeza se o acesso é remoto. Aqui está a prova:
                   </p>
                   <ul className="space-y-3 text-sm">
                     <li className="flex items-start gap-3">
-                      <div className="mt-1 p-1 bg-accent/20 rounded-full"><ShieldCheck size={12} className="text-accent" /></div>
+                      <div className="mt-1 p-1 bg-primary/20 rounded-full"><ShieldCheck size={12} className="text-primary" /></div>
                       <span>Este aplicativo está rodando em um servidor na **Nuvem (Google Cloud)**.</span>
                     </li>
                     <li className="flex items-start gap-3">
-                      <div className="mt-1 p-1 bg-accent/20 rounded-full"><ShieldCheck size={12} className="text-accent" /></div>
+                      <div className="mt-1 p-1 bg-primary/20 rounded-full"><ShieldCheck size={12} className="text-primary" /></div>
                       <span>Quando você clica em "Conectar", o servidor na nuvem viaja pela internet até o seu IP IPv6 (**{config.host}**).</span>
                     </li>
                     <li className="flex items-start gap-3">
-                      <div className="mt-1 p-1 bg-accent/20 rounded-full"><ShieldCheck size={12} className="text-accent" /></div>
+                      <div className="mt-1 p-1 bg-primary/20 rounded-full"><ShieldCheck size={12} className="text-primary" /></div>
                       <span>Mesmo que seu computador esteja na mesma rede, a "conversa" acontece entre a Nuvem e o seu Mikrotik.</span>
                     </li>
                   </ul>
@@ -1012,13 +1012,13 @@ export default function App() {
               <div className="flex gap-8 border-b border-white/5 mb-12">
                 <button 
                   onClick={() => setSettingsTab('general')}
-                  className={`pb-4 text-[10px] font-bold uppercase tracking-widest transition-all ${settingsTab === 'general' ? 'text-accent border-b-2 border-accent' : 'opacity-40 hover:opacity-100'}`}
+                  className={`pb-4 text-[10px] font-bold uppercase tracking-widest transition-all ${settingsTab === 'general' ? 'text-primary border-b-2 border-primary' : 'opacity-40 hover:opacity-100'}`}
                 >
                   Geral
                 </button>
                 <button 
                   onClick={() => setSettingsTab('custom_html')}
-                  className={`pb-4 text-[10px] font-bold uppercase tracking-widest transition-all ${settingsTab === 'custom_html' ? 'text-accent border-b-2 border-accent' : 'opacity-40 hover:opacity-100'}`}
+                  className={`pb-4 text-[10px] font-bold uppercase tracking-widest transition-all ${settingsTab === 'custom_html' ? 'text-primary border-b-2 border-primary' : 'opacity-40 hover:opacity-100'}`}
                 >
                   Custom HTML
                 </button>
@@ -1033,7 +1033,7 @@ export default function App() {
                         type="text" 
                         value={outletName}
                         onChange={e => setOutletName(e.target.value)}
-                        className="w-full bg-transparent border-b border-line py-2 focus:outline-none focus:border-accent transition-colors font-mono"
+                        className="w-full bg-transparent border-b border-line py-2 focus:outline-none focus:border-primary transition-colors font-mono"
                       />
                     </div>
                     
@@ -1073,7 +1073,7 @@ export default function App() {
                     </div>
                   </div>
 
-                  <div className="p-4 bg-accent/5 border border-accent/20 text-accent text-[10px] leading-relaxed">
+                  <div className="p-4 bg-primary/5 border border-primary/20 text-primary text-[10px] leading-relaxed">
                     <strong>DICA:</strong> As informações de conexão (IP, Usuário e Senha) agora são gerenciadas diretamente na tela de login para sua segurança e praticidade.
                   </div>
 
@@ -1089,7 +1089,7 @@ export default function App() {
                     type="button"
                     onClick={handleSetupCleanup}
                     disabled={loading || !isConnected}
-                    className="w-full border border-accent/30 text-accent hover:bg-accent/5 py-4 font-bold uppercase tracking-widest text-xs transition-all flex items-center justify-center gap-3 disabled:opacity-30"
+                    className="w-full border border-primary/30 text-primary hover:bg-primary/5 py-4 font-bold uppercase tracking-widest text-xs transition-all flex items-center justify-center gap-3 disabled:opacity-30"
                   >
                     <Trash2 size={16} />
                     Ativar Auto-Limpeza de Expirados
@@ -1105,7 +1105,7 @@ export default function App() {
                 </div>
 
                 {testResult && (
-                  <div className={`p-4 border text-[10px] leading-relaxed flex items-center gap-3 ${testResult.success ? 'bg-accent/10 border-accent text-accent' : 'bg-red-500/10 border-red-500 text-red-500'}`}>
+                  <div className={`p-4 border text-[10px] leading-relaxed flex items-center gap-3 ${testResult.success ? 'bg-primary/10 border-primary text-primary' : 'bg-red-500/10 border-red-500 text-red-500'}`}>
                     {testResult.success ? <ShieldCheck size={16} /> : <ShieldAlert size={16} />}
                     {testResult.message}
                   </div>
@@ -1128,19 +1128,19 @@ export default function App() {
                                 type="password" 
                                 value={pinInput}
                                 onChange={e => setPinInput(e.target.value)}
-                                className="w-full bg-black border border-white/10 p-3 rounded font-mono text-center tracking-widest focus:border-accent outline-none"
+                                className="w-full bg-black border border-white/10 p-3 rounded font-mono text-center tracking-widest focus:border-primary outline-none"
                                 placeholder="****"
                               />
                             </div>
                             <div className="flex gap-2">
-                              <button type="submit" className="flex-1 bg-accent text-black py-2 text-[10px] font-bold uppercase tracking-widest">Salvar PIN</button>
+                              <button type="submit" className="flex-1 bg-primary text-black py-2 text-[10px] font-bold uppercase tracking-widest">Salvar PIN</button>
                               <button type="button" onClick={() => setIsSettingPin(false)} className="flex-1 border border-white/10 py-2 text-[10px] font-bold uppercase tracking-widest">Cancelar</button>
                             </div>
                           </form>
                         ) : (
                           <button 
                             onClick={() => setIsSettingPin(true)}
-                            className="w-full bg-accent/10 text-accent border border-accent/20 py-3 text-[10px] font-bold uppercase tracking-widest hover:bg-accent hover:text-black transition-all flex items-center justify-center gap-2"
+                            className="w-full bg-primary/10 text-primary border border-primary/20 py-3 text-[10px] font-bold uppercase tracking-widest hover:bg-primary hover:text-black transition-all flex items-center justify-center gap-2"
                           >
                             <Lock size={14} /> Configurar PIN de Acesso
                           </button>
@@ -1148,7 +1148,7 @@ export default function App() {
                       </div>
                     ) : (
                       <div className="space-y-4">
-                        <div className="flex items-center gap-3 text-accent">
+                        <div className="flex items-center gap-3 text-primary">
                           <ShieldCheck size={20} />
                           <span className="text-xs font-bold uppercase tracking-widest">Proteção Ativa</span>
                         </div>
@@ -1189,14 +1189,14 @@ export default function App() {
                         <strong>Use o DNS:</strong> No campo "Endereço IP" acima, cole o nome DNS que você copiou (ex: <code>xxxx.sn.mynetname.net</code>).
                       </li>
                     </ol>
-                    <div className="p-4 bg-accent/5 border border-accent/10 text-accent italic">
+                    <div className="p-4 bg-primary/5 border border-primary/10 text-primary italic">
                       Dica: Com isso configurado, você pode usar este link do navegador em qualquer lugar do mundo!
                     </div>
 
                     <div className="mt-8 p-6 bg-surface border border-line rounded-lg">
-                      <h4 className="text-[10px] uppercase font-bold tracking-widest mb-4 text-accent">Script de Configuração Rápida</h4>
+                      <h4 className="text-[10px] uppercase font-bold tracking-widest mb-4 text-primary">Script de Configuração Rápida</h4>
                       <p className="text-[10px] opacity-40 mb-4">Copie e cole no Terminal do seu Mikrotik (Winbox {'>'} New Terminal):</p>
-                      <pre className="bg-black/40 p-4 rounded font-mono text-[10px] overflow-x-auto border border-line text-accent select-all">
+                      <pre className="bg-black/40 p-4 rounded font-mono text-[10px] overflow-x-auto border border-line text-primary select-all">
                         {`/ip cloud set ddns-enabled=yes\n/ip service enable api\n/ip firewall filter add action=accept chain=input dst-port=8728 protocol=tcp comment="Permitir API Mikrotik (UserMan)"`}
                       </pre>
                       
@@ -1212,7 +1212,7 @@ export default function App() {
                         <div className="mt-4 p-3 bg-black/20 border border-line rounded">
                           <p className="text-[9px] uppercase font-bold mb-2 opacity-40">Dica Starlink IPv6:</p>
                           <p className="text-[10px] opacity-60 mb-2">No DHCPv6 Client, mude o <strong>Pool Prefix Length</strong> para <strong>56</strong> (em vez de 64). Isso é essencial para a Starlink entregar o endereço.</p>
-                          <pre className="text-[9px] text-accent overflow-x-auto">
+                          <pre className="text-[9px] text-primary overflow-x-auto">
                             {`/ipv6 dhcp-client add add-default-route=yes interface=ether1 pool-name=starlink request=prefix pool-prefix-length=56`}
                           </pre>
                         </div>
@@ -1234,9 +1234,9 @@ export default function App() {
                         value="standard" 
                         checked={voucherTemplateType === 'standard'}
                         onChange={() => setVoucherTemplateType('standard')}
-                        className="w-4 h-4 accent-accent"
+                        className="w-4 h-4 accent-primary"
                       />
-                      <span className={`text-sm transition-colors ${voucherTemplateType === 'standard' ? 'text-accent font-bold' : 'opacity-60'}`}>
+                      <span className={`text-sm transition-colors ${voucherTemplateType === 'standard' ? 'text-primary font-bold' : 'opacity-60'}`}>
                         Template padrão (Sem Imagem)
                       </span>
                     </label>
@@ -1248,9 +1248,9 @@ export default function App() {
                         value="custom" 
                         checked={voucherTemplateType === 'custom'}
                         onChange={() => setVoucherTemplateType('custom')}
-                        className="w-4 h-4 accent-accent"
+                        className="w-4 h-4 accent-primary"
                       />
-                      <span className={`text-sm transition-colors ${voucherTemplateType === 'custom' ? 'text-accent font-bold' : 'opacity-60'}`}>
+                      <span className={`text-sm transition-colors ${voucherTemplateType === 'custom' ? 'text-primary font-bold' : 'opacity-60'}`}>
                         Template customizado
                       </span>
                     </label>
@@ -1287,7 +1287,7 @@ export default function App() {
                     onClick={() => {
                       alert('Modelo de voucher salvo com sucesso!');
                     }}
-                    className="w-full bg-zinc-800 text-white py-4 font-bold uppercase tracking-widest text-xs hover:bg-accent hover:text-black transition-all flex items-center justify-center gap-3 border border-white/5"
+                    className="w-full bg-zinc-800 text-white py-4 font-bold uppercase tracking-widest text-xs hover:bg-primary hover:text-black transition-all flex items-center justify-center gap-3 border border-white/5"
                   >
                     <Database size={16} />
                     Salvar o modelo do voucher
@@ -1319,7 +1319,7 @@ export default function App() {
                   </button>
                   <button 
                     onClick={() => setActiveTab('generator')}
-                    className="flex items-center gap-2 px-6 py-3 bg-accent text-bg font-bold uppercase tracking-widest text-[10px] hover:opacity-90 transition-all"
+                    className="flex items-center gap-2 px-6 py-3 bg-primary text-bg font-bold uppercase tracking-widest text-[10px] hover:opacity-90 transition-all"
                   >
                     <PlusCircle size={16} />
                     Novo Lote
@@ -1342,7 +1342,7 @@ export default function App() {
                     ) : (
                       users.map(user => (
                         <div key={user['.id']} className="grid grid-cols-[1fr_1fr_1fr_1fr_80px] p-4 items-center hover:bg-white/5 transition-all group">
-                          <span className="font-mono font-bold text-accent truncate">{user.name}</span>
+                          <span className="font-mono font-bold text-primary truncate">{user.name}</span>
                           <span className="text-sm opacity-60 group-hover:opacity-100 truncate">{user.profile}</span>
                           <span className="text-sm opacity-60 group-hover:opacity-100 font-mono truncate">{user.uptime || '0s'}</span>
                           <span className="text-sm opacity-60 group-hover:opacity-100 font-mono truncate">
@@ -1386,7 +1386,7 @@ export default function App() {
                       type="number" 
                       value={genCount}
                       onChange={e => setGenCount(parseInt(e.target.value))}
-                      className="w-full bg-transparent border-b border-line py-2 focus:outline-none focus:border-accent transition-colors font-mono text-2xl"
+                      className="w-full bg-transparent border-b border-line py-2 focus:outline-none focus:border-primary transition-colors font-mono text-2xl"
                     />
                   </div>
 
@@ -1395,7 +1395,7 @@ export default function App() {
                     <select 
                       value={genProfile}
                       onChange={e => setGenProfile(e.target.value)}
-                      className="w-full bg-transparent border-b border-line py-2 focus:outline-none focus:border-accent transition-colors appearance-none"
+                      className="w-full bg-transparent border-b border-line py-2 focus:outline-none focus:border-primary transition-colors appearance-none"
                     >
                       {loading && profiles.length === 0 ? (
                         <option>Carregando perfis...</option>
@@ -1414,7 +1414,7 @@ export default function App() {
                     <select 
                       value={genVoucherType}
                       onChange={e => setGenVoucherType(e.target.value)}
-                      className="w-full bg-transparent border-b border-line py-2 focus:outline-none focus:border-accent transition-colors appearance-none"
+                      className="w-full bg-transparent border-b border-line py-2 focus:outline-none focus:border-primary transition-colors appearance-none"
                     >
                       <option value="username_only">Apenas Usuário (Código)</option>
                       <option value="user_pass">Usuário e Senha (Iguais)</option>
@@ -1426,7 +1426,7 @@ export default function App() {
                     <select 
                       value={genCharType}
                       onChange={e => setGenCharType(e.target.value)}
-                      className="w-full bg-transparent border-b border-line py-2 focus:outline-none focus:border-accent transition-colors appearance-none"
+                      className="w-full bg-transparent border-b border-line py-2 focus:outline-none focus:border-primary transition-colors appearance-none"
                     >
                       <option value="numbers">Apenas Números</option>
                       <option value="letters">Apenas Letras (Maiúsculas)</option>
@@ -1440,7 +1440,7 @@ export default function App() {
                       type="text" 
                       value={genDNSName}
                       onChange={e => setGenDNSName(e.target.value)}
-                      className="w-full bg-transparent border-b border-line py-2 focus:outline-none focus:border-accent transition-colors font-mono"
+                      className="w-full bg-transparent border-b border-line py-2 focus:outline-none focus:border-primary transition-colors font-mono"
                     />
                   </div>
 
@@ -1451,7 +1451,7 @@ export default function App() {
                       value={genPrice}
                       onChange={e => setGenPrice(e.target.value)}
                       placeholder="Ex: R$ 5,00"
-                      className="w-full bg-transparent border-b border-line py-2 focus:outline-none focus:border-accent transition-colors font-mono"
+                      className="w-full bg-transparent border-b border-line py-2 focus:outline-none focus:border-primary transition-colors font-mono"
                     />
                   </div>
                 </div>
@@ -1463,7 +1463,7 @@ export default function App() {
                       type="text" 
                       value={genPrefix}
                       onChange={e => setGenPrefix(e.target.value)}
-                      className="w-full bg-transparent border-b border-line py-2 focus:outline-none focus:border-accent transition-colors font-mono"
+                      className="w-full bg-transparent border-b border-line py-2 focus:outline-none focus:border-primary transition-colors font-mono"
                     />
                   </div>
 
@@ -1472,7 +1472,7 @@ export default function App() {
                     <select 
                       value={genColor}
                       onChange={e => setGenColor(e.target.value)}
-                      className="w-full bg-transparent border-b border-line py-2 focus:outline-none focus:border-accent transition-colors appearance-none"
+                      className="w-full bg-transparent border-b border-line py-2 focus:outline-none focus:border-primary transition-colors appearance-none"
                     >
                       <option value="emerald">Verde (Padrão)</option>
                       <option value="blue">Azul</option>
@@ -1488,7 +1488,7 @@ export default function App() {
                       type="number" 
                       value={genLength}
                       onChange={e => setGenLength(parseInt(e.target.value))}
-                      className="w-full bg-transparent border-b border-line py-2 focus:outline-none focus:border-accent transition-colors font-mono"
+                      className="w-full bg-transparent border-b border-line py-2 focus:outline-none focus:border-primary transition-colors font-mono"
                     />
                   </div>
 
@@ -1496,15 +1496,15 @@ export default function App() {
                     <label className="text-[10px] uppercase font-bold tracking-widest opacity-40">Limite de Tempo (Uptime)</label>
                     <div className="grid grid-cols-3 gap-2">
                       <div>
-                        <input type="number" value={uptimeDays} onChange={e => setUptimeDays(parseInt(e.target.value))} className="w-full bg-transparent border-b border-line py-2 focus:outline-none focus:border-accent transition-colors text-center" />
+                        <input type="number" value={uptimeDays} onChange={e => setUptimeDays(parseInt(e.target.value))} className="w-full bg-transparent border-b border-line py-2 focus:outline-none focus:border-primary transition-colors text-center" />
                         <span className="text-[8px] opacity-30 uppercase block text-center mt-1">Dia</span>
                       </div>
                       <div>
-                        <input type="number" value={uptimeHours} onChange={e => setUptimeHours(parseInt(e.target.value))} className="w-full bg-transparent border-b border-line py-2 focus:outline-none focus:border-accent transition-colors text-center" />
+                        <input type="number" value={uptimeHours} onChange={e => setUptimeHours(parseInt(e.target.value))} className="w-full bg-transparent border-b border-line py-2 focus:outline-none focus:border-primary transition-colors text-center" />
                         <span className="text-[8px] opacity-30 uppercase block text-center mt-1">Hora</span>
                       </div>
                       <div>
-                        <input type="number" value={uptimeMinutes} onChange={e => setUptimeMinutes(parseInt(e.target.value))} className="w-full bg-transparent border-b border-line py-2 focus:outline-none focus:border-accent transition-colors text-center" />
+                        <input type="number" value={uptimeMinutes} onChange={e => setUptimeMinutes(parseInt(e.target.value))} className="w-full bg-transparent border-b border-line py-2 focus:outline-none focus:border-primary transition-colors text-center" />
                         <span className="text-[8px] opacity-30 uppercase block text-center mt-1">Min</span>
                       </div>
                     </div>
@@ -1516,7 +1516,7 @@ export default function App() {
                       type="number" 
                       value={genLimitBytes}
                       onChange={e => setGenLimitBytes(e.target.value)}
-                      className="w-full bg-transparent border-b border-line py-2 focus:outline-none focus:border-accent transition-colors font-mono"
+                      className="w-full bg-transparent border-b border-line py-2 focus:outline-none focus:border-primary transition-colors font-mono"
                     />
                     <p className="text-[9px] opacity-30 italic">0 = Sem limite de dados</p>
                   </div>
@@ -1525,7 +1525,7 @@ export default function App() {
 
               <div className="mt-12 p-8 border border-dashed border-line bg-white/5">
                 <div className="flex items-start gap-4">
-                  <div className="p-2 bg-accent/10 text-accent">
+                  <div className="p-2 bg-primary/10 text-primary">
                     <ShieldCheck size={20} />
                   </div>
                   <div>
@@ -1541,7 +1541,7 @@ export default function App() {
               <button 
                 onClick={handleGenerate}
                 disabled={loading}
-                className="mt-12 w-full bg-accent text-bg py-6 font-bold uppercase tracking-widest text-sm hover:opacity-90 transition-all flex items-center justify-center gap-3 disabled:opacity-50"
+                className="mt-12 w-full bg-primary text-bg py-6 font-bold uppercase tracking-widest text-sm hover:opacity-90 transition-all flex items-center justify-center gap-3 disabled:opacity-50"
               >
                 {loading ? <RefreshCw className="animate-spin" size={20} /> : <Database size={20} />}
                 Gerar {genCount} Usuários Agora
