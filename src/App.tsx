@@ -433,7 +433,7 @@ export default function App() {
                   className="w-full border border-white/10 text-[10px] font-bold uppercase tracking-widest py-3 hover:bg-white/5 transition-all flex items-center justify-center gap-2 disabled:opacity-30"
                 >
                   {loading ? <RefreshCw className="animate-spin" size={12} /> : <Wifi size={12} />}
-                  Testar Conexão (Porta {port})
+                  Testar Conexão (Porta {config.port})
                 </button>
 
                 {testResult && (
