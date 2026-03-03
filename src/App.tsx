@@ -19,7 +19,12 @@ import {
   Wifi,
   Network,
   FileText,
-  Info
+  Info,
+  Lock,
+  Unlock,
+  Eye,
+  EyeOff,
+  Rocket
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 
@@ -111,6 +116,14 @@ export default function App() {
   const [systemLogo, setSystemLogo] = useState<string | null>(() => localStorage.getItem('system_logo'));
   const [detectedIP, setDetectedIP] = useState<string | null>(null);
   
+  // Security & Welcome State
+  const [showWelcome, setShowWelcome] = useState(() => !localStorage.getItem('welcome_seen'));
+  const [appPin, setAppPin] = useState(() => localStorage.getItem('app_pin') || '');
+  const [isLocked, setIsLocked] = useState(() => !!localStorage.getItem('app_pin'));
+  const [pinInput, setPinInput] = useState('');
+  const [isSettingPin, setIsSettingPin] = useState(false);
+  const [showPin, setShowPin] = useState(false);
+  
   useEffect(() => {
     fetch('/api/utils/my-ip')
       .then(res => res.json())
@@ -188,6 +201,45 @@ export default function App() {
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleUnlock = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (pinInput === appPin) {
+      setIsLocked(false);
+      setPinInput('');
+      setError(null);
+    } else {
+      setError('PIN Incorreto');
+      setPinInput('');
+    }
+  };
+
+  const handleSetPin = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (pinInput.length < 4) {
+      setError('O PIN deve ter pelo menos 4 dígitos');
+      return;
+    }
+    setAppPin(pinInput);
+    localStorage.setItem('app_pin', pinInput);
+    setIsSettingPin(false);
+    setPinInput('');
+    alert('PIN de segurança configurado com sucesso!');
+  };
+
+  const handleRemovePin = () => {
+    if (window.confirm('Deseja realmente remover a trava de segurança?')) {
+      setAppPin('');
+      localStorage.removeItem('app_pin');
+      setIsLocked(false);
+      alert('Trava de segurança removida.');
+    }
+  };
+
+  const closeWelcome = () => {
+    setShowWelcome(false);
+    localStorage.setItem('welcome_seen', 'true');
   };
 
   const handleConnect = async (e?: React.FormEvent | React.MouseEvent) => {
@@ -316,6 +368,113 @@ export default function App() {
   };
 
   // Force rebuild - v1.0.1
+  if (showWelcome) {
+    return (
+      <div className="min-h-screen bg-black flex items-center justify-center p-4">
+        <motion.div 
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="w-full max-w-lg bg-zinc-950 border border-accent/20 p-8 shadow-2xl relative overflow-hidden"
+        >
+          <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-accent to-transparent opacity-50" />
+          
+          <div className="flex flex-col items-center text-center space-y-6">
+            <div className="p-4 bg-accent/10 rounded-full text-accent">
+              <Rocket size={48} />
+            </div>
+            
+            <div className="space-y-2">
+              <h1 className="font-serif italic text-4xl text-white">Bem-vindo ao PROZIN</h1>
+              <p className="text-accent/60 uppercase tracking-widest text-[10px] font-bold">Sistema de Gestão Mikrotik Hotspot</p>
+            </div>
+
+            <div className="bg-white/5 p-6 rounded-xl text-left space-y-4 border border-white/5">
+              <p className="text-sm leading-relaxed opacity-80">
+                Este aplicativo permite que você gerencie sua RB Mikrotik de qualquer lugar do mundo, 
+                mesmo usando Starlink ou estando atrás de CGNAT.
+              </p>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="flex items-start gap-3">
+                  <div className="mt-1 text-accent"><ShieldCheck size={14} /></div>
+                  <div className="text-[11px] opacity-60">Geração de vouchers em massa com um clique.</div>
+                </div>
+                <div className="flex items-start gap-3">
+                  <div className="mt-1 text-accent"><Network size={14} /></div>
+                  <div className="text-[11px] opacity-60">Configuração automática de IPv6 para PPPoE.</div>
+                </div>
+                <div className="flex items-start gap-3">
+                  <div className="mt-1 text-accent"><Lock size={14} /></div>
+                  <div className="text-[11px] opacity-60">Segurança local: seus dados ficam no seu navegador.</div>
+                </div>
+                <div className="flex items-start gap-3">
+                  <div className="mt-1 text-accent"><Wifi size={14} /></div>
+                  <div className="text-[11px] opacity-60">Acesso remoto via IPv6 ou Túnel VPN.</div>
+                </div>
+              </div>
+            </div>
+
+            <button 
+              onClick={closeWelcome}
+              className="w-full bg-accent text-black py-4 font-bold uppercase tracking-[0.2em] text-sm hover:opacity-90 transition-all"
+            >
+              COMEÇAR AGORA
+            </button>
+          </div>
+        </motion.div>
+      </div>
+    );
+  }
+
+  if (isLocked) {
+    return (
+      <div className="min-h-screen bg-black flex items-center justify-center p-4">
+        <motion.div 
+          initial={{ opacity: 0, scale: 0.9 }}
+          animate={{ opacity: 1, scale: 1 }}
+          className="w-full max-w-md bg-zinc-950 border border-white/5 p-8 shadow-2xl text-center"
+        >
+          <div className="flex justify-center mb-6">
+            <div className="p-4 bg-zinc-900 rounded-full text-accent">
+              <Lock size={40} />
+            </div>
+          </div>
+          
+          <h2 className="font-serif italic text-2xl mb-2">App Bloqueado</h2>
+          <p className="text-[10px] uppercase tracking-widest opacity-40 mb-8">Insira seu PIN de segurança para continuar</p>
+
+          <form onSubmit={handleUnlock} className="space-y-6">
+            <div className="relative">
+              <input 
+                type={showPin ? "text" : "password"}
+                value={pinInput}
+                onChange={e => setPinInput(e.target.value)}
+                className="w-full bg-zinc-900 border-b-2 border-accent/20 py-4 text-center text-2xl tracking-[0.5em] focus:outline-none focus:border-accent transition-all font-mono"
+                placeholder="****"
+                autoFocus
+              />
+              <button 
+                type="button"
+                onClick={() => setShowPin(!showPin)}
+                className="absolute right-0 top-1/2 -translate-y-1/2 p-2 text-zinc-500 hover:text-accent"
+              >
+                {showPin ? <EyeOff size={18} /> : <Eye size={18} />}
+              </button>
+            </div>
+
+            {error && <p className="text-red-500 text-[10px] font-bold uppercase">{error}</p>}
+
+            <button 
+              type="submit"
+              className="w-full bg-accent text-black py-4 font-bold uppercase tracking-widest text-sm hover:opacity-90 transition-all"
+            >
+              DESBLOQUEAR
+            </button>
+          </form>
+        </motion.div>
+      </div>
+    );
+  }
+
   if (!isConnected) {
     return (
       <div className="min-h-screen bg-black flex items-center justify-center p-4">
@@ -951,6 +1110,69 @@ export default function App() {
                     {testResult.message}
                   </div>
                 )}
+
+                <div className="mt-12 pt-12 border-t border-line">
+                  <h3 className="text-[10px] uppercase font-bold tracking-widest opacity-40 mb-6">Segurança do Aplicativo</h3>
+                  
+                  <div className="p-6 bg-zinc-900/50 border border-white/5 rounded-xl space-y-6">
+                    {!appPin ? (
+                      <div className="space-y-4">
+                        <p className="text-xs opacity-60 leading-relaxed">
+                          Ative uma trava de segurança (PIN) para proteger seus dados de acesso ao Mikrotik salvos neste navegador.
+                        </p>
+                        {isSettingPin ? (
+                          <form onSubmit={handleSetPin} className="space-y-4">
+                            <div className="space-y-2">
+                              <label className="text-[9px] uppercase font-bold tracking-widest opacity-40">Definir PIN (Mín. 4 dígitos)</label>
+                              <input 
+                                type="password" 
+                                value={pinInput}
+                                onChange={e => setPinInput(e.target.value)}
+                                className="w-full bg-black border border-white/10 p-3 rounded font-mono text-center tracking-widest focus:border-accent outline-none"
+                                placeholder="****"
+                              />
+                            </div>
+                            <div className="flex gap-2">
+                              <button type="submit" className="flex-1 bg-accent text-black py-2 text-[10px] font-bold uppercase tracking-widest">Salvar PIN</button>
+                              <button type="button" onClick={() => setIsSettingPin(false)} className="flex-1 border border-white/10 py-2 text-[10px] font-bold uppercase tracking-widest">Cancelar</button>
+                            </div>
+                          </form>
+                        ) : (
+                          <button 
+                            onClick={() => setIsSettingPin(true)}
+                            className="w-full bg-accent/10 text-accent border border-accent/20 py-3 text-[10px] font-bold uppercase tracking-widest hover:bg-accent hover:text-black transition-all flex items-center justify-center gap-2"
+                          >
+                            <Lock size={14} /> Configurar PIN de Acesso
+                          </button>
+                        )}
+                      </div>
+                    ) : (
+                      <div className="space-y-4">
+                        <div className="flex items-center gap-3 text-accent">
+                          <ShieldCheck size={20} />
+                          <span className="text-xs font-bold uppercase tracking-widest">Proteção Ativa</span>
+                        </div>
+                        <p className="text-[11px] opacity-40">
+                          O aplicativo solicitará o PIN sempre que for aberto neste navegador.
+                        </p>
+                        <div className="flex gap-2">
+                          <button 
+                            onClick={() => setIsLocked(true)}
+                            className="flex-1 border border-white/10 py-2 text-[10px] font-bold uppercase tracking-widest hover:bg-white/5 transition-all flex items-center justify-center gap-2"
+                          >
+                            <Lock size={14} /> Bloquear Agora
+                          </button>
+                          <button 
+                            onClick={handleRemovePin}
+                            className="flex-1 border border-red-500/20 text-red-500 py-2 text-[10px] font-bold uppercase tracking-widest hover:bg-red-500/5 transition-all flex items-center justify-center gap-2"
+                          >
+                            <Trash2 size={14} /> Remover PIN
+                          </button>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                </div>
 
                 <div className="mt-12 pt-12 border-t border-line">
                   <h3 className="text-[10px] uppercase font-bold tracking-widest opacity-40 mb-4">Evolução: Acesso Remoto (Nuvem)</h3>
