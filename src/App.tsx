@@ -74,26 +74,96 @@ interface Profile {
   name: string;
 }
 
+interface Device {
+  id: string;
+  name: string;
+  host: string;
+  user: string;
+  password: string;
+  port: string;
+}
+
 export default function App() {
-  const [config, setConfig] = useState(() => {
-    const saved = localStorage.getItem('mikrotik_config');
-    return saved ? JSON.parse(saved) : {
-      host: '192.168.1.127',
-      user: 'admin',
-      password: '',
-      port: '8728'
-    };
+  const [devices, setDevices] = useState<Device[]>([]);
+  const [selectedDeviceId, setSelectedDeviceId] = useState<string | null>(null);
+  const [config, setConfig] = useState({
+    host: '192.168.1.1',
+    user: 'admin',
+    password: '',
+    port: '8728'
   });
 
   useEffect(() => {
-    localStorage.setItem('mikrotik_config', JSON.stringify(config));
-  }, [config]);
+    fetchDevices();
+  }, []);
+
+  const fetchDevices = async () => {
+    try {
+      const res = await fetch('/api/devices');
+      const data = await res.json();
+      setDevices(data);
+      
+      // Carregar o último dispositivo usado ou o primeiro da lista
+      const lastId = localStorage.getItem('selected_device_id');
+      if (lastId && data.find((d: Device) => d.id === lastId)) {
+        handleSelectDevice(data.find((d: Device) => d.id === lastId));
+      } else if (data.length > 0) {
+        handleSelectDevice(data[0]);
+      }
+    } catch (err) {
+      console.error('Erro ao buscar dispositivos:', err);
+    }
+  };
+
+  const handleSelectDevice = (device: Device) => {
+    setSelectedDeviceId(device.id);
+    setConfig({
+      host: device.host,
+      user: device.user,
+      password: device.password,
+      port: device.port
+    });
+    localStorage.setItem('selected_device_id', device.id);
+    setIsConnected(false); // Resetar conexão ao trocar
+  };
+
+  const handleAddDevice = async (newDevice: Omit<Device, 'id'>) => {
+    try {
+      const res = await fetch('/api/devices', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(newDevice)
+      });
+      const data = await res.json();
+      if (data.success) {
+        fetchDevices();
+        return true;
+      }
+    } catch (err) {
+      alert('Erro ao adicionar dispositivo');
+    }
+    return false;
+  };
+
+  const handleDeleteDevice = async (id: string) => {
+    if (!window.confirm('Excluir este dispositivo?')) return;
+    try {
+      await fetch(`/api/devices/${id}`, { method: 'DELETE' });
+      fetchDevices();
+      if (selectedDeviceId === id) {
+        setSelectedDeviceId(null);
+        setIsConnected(false);
+      }
+    } catch (err) {
+      alert('Erro ao excluir dispositivo');
+    }
+  };
   const [isConnected, setIsConnected] = useState(false);
   const [users, setUsers] = useState<MikrotikUser[]>([]);
   const [profiles, setProfiles] = useState<Profile[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [activeTab, setActiveTab] = useState<'dashboard' | 'generator' | 'settings' | 'hotspot' | 'ppp' | 'logs' | 'about'>('settings');
+  const [activeTab, setActiveTab] = useState<'dashboard' | 'generator' | 'settings' | 'hotspot' | 'ppp' | 'logs' | 'about' | 'devices'>('settings');
   
   // Generator state
   const [genCount, setGenCount] = useState(10);
@@ -674,6 +744,16 @@ export default function App() {
             <>
               <button 
                 onClick={() => {
+                  setActiveTab('devices');
+                  setIsMobileMenuOpen(false);
+                }}
+                className={`w-full flex items-center gap-4 px-8 py-4 text-sm font-medium transition-all ${activeTab === 'devices' ? 'bg-primary text-black' : 'hover:bg-white/5 opacity-40 hover:opacity-100'}`}
+              >
+                <Database size={18} />
+                Meus Mikrotiks
+              </button>
+              <button 
+                onClick={() => {
                   setActiveTab('dashboard');
                   setIsMobileMenuOpen(false);
                 }}
@@ -864,7 +944,7 @@ export default function App() {
                 <div className="flex gap-4">
                   <button 
                     onClick={async () => {
-                      if (!window.confirm("Isso irá configurar o DHCPv6 Client na ether1 e o perfil default para usar o pool 'pool-pppoe'. Continuar?")) return;
+                      if (!window.confirm("Isso irá configurar o DHCPv6 Client na ether1, criar o pool 'pool-ipv6', configurar o endereço na Bridge e os perfis PPP para entregar IPv6 aos clientes. Continuar?")) return;
                       setLoading(true);
                       try {
                         const res = await fetch('/api/mikrotik/setup-ipv6-pppoe', {
@@ -873,7 +953,7 @@ export default function App() {
                           body: JSON.stringify(config)
                         });
                         const data = await res.json();
-                        if (data.success) alert("IPv6 configurado com sucesso no perfil default!");
+                        if (data.success) alert("IPv6 configurado com sucesso para Bridge e PPPoE!");
                         else alert("Erro: " + data.message);
                       } catch (e) {
                         alert("Erro de conexão");
@@ -930,6 +1010,97 @@ export default function App() {
                         </div>
                       ))
                     )}
+                  </div>
+                </div>
+              </div>
+            </motion.div>
+          )}
+
+          {activeTab === 'devices' && (
+            <motion.div 
+              key="devices"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -20 }}
+            >
+              <div className="flex justify-between items-end mb-12">
+                <div>
+                  <h2 className="font-serif italic text-4xl mb-2">Meus Mikrotiks</h2>
+                  <p className="opacity-40 text-sm">Gerencie múltiplos dispositivos e acesse remotamente.</p>
+                </div>
+                <button 
+                  onClick={() => {
+                    const name = prompt('Nome Amigável (ex: Loja Centro):');
+                    const host = prompt('Endereço (IP ou DNS Cloud):');
+                    const user = prompt('Usuário Mikrotik:');
+                    const password = prompt('Senha Mikrotik:');
+                    if (name && host && user) {
+                      handleAddDevice({ name, host, user, password: password || '', port: '8728' });
+                    }
+                  }}
+                  className="flex items-center gap-2 px-6 py-3 bg-primary text-bg font-bold uppercase tracking-widest text-[10px] hover:opacity-90 transition-all"
+                >
+                  <PlusCircle size={16} />
+                  Adicionar Mikrotik
+                </button>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {devices.map((device) => (
+                  <div 
+                    key={device.id} 
+                    className={`p-6 border transition-all cursor-pointer group relative overflow-hidden ${selectedDeviceId === device.id ? 'bg-primary/10 border-primary' : 'bg-zinc-900/50 border-white/5 hover:border-primary/30'}`}
+                    onClick={() => handleSelectDevice(device)}
+                  >
+                    <div className="flex justify-between items-start mb-4">
+                      <div className={`p-3 rounded-lg ${selectedDeviceId === device.id ? 'bg-primary text-black' : 'bg-zinc-800 text-primary/50'}`}>
+                        <Network size={24} />
+                      </div>
+                      <button 
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleDeleteDevice(device.id);
+                        }}
+                        className="p-2 text-zinc-600 hover:text-red-500 transition-colors"
+                      >
+                        <Trash2 size={16} />
+                      </button>
+                    </div>
+                    
+                    <h3 className="font-bold text-lg text-white mb-1">{device.name}</h3>
+                    <p className="text-[10px] font-mono opacity-40 truncate mb-4">{device.host}:{device.port}</p>
+                    
+                    <div className="flex items-center justify-between mt-auto">
+                      <span className={`text-[9px] uppercase font-bold tracking-widest ${selectedDeviceId === device.id ? 'text-primary' : 'opacity-20'}`}>
+                        {selectedDeviceId === device.id ? 'Selecionado' : 'Clique para selecionar'}
+                      </span>
+                      {selectedDeviceId === device.id && isConnected && (
+                        <div className="flex items-center gap-1 text-[9px] text-primary uppercase font-bold">
+                          <div className="w-1.5 h-1.5 bg-primary rounded-full animate-pulse" />
+                          Ativo
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                ))}
+
+                {devices.length === 0 && (
+                  <div className="col-span-full p-12 border border-dashed border-white/10 text-center opacity-40 italic">
+                    Nenhum Mikrotik cadastrado. Adicione o primeiro acima.
+                  </div>
+                )}
+              </div>
+
+              <div className="mt-12 p-8 bg-primary/5 border border-primary/10 rounded-xl">
+                <h3 className="font-bold uppercase tracking-widest text-xs mb-4 text-primary">Acesso Remoto vs Local</h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-8 text-sm opacity-60 leading-relaxed">
+                  <div>
+                    <p className="font-bold text-white mb-2">Localmente:</p>
+                    <p>Use o IP interno (ex: 192.168.88.1). Funciona apenas se você estiver na mesma rede que o Mikrotik.</p>
+                  </div>
+                  <div>
+                    <p className="font-bold text-white mb-2">Remotamente (Winbox Cloud):</p>
+                    <p>Use o DNS Name do Mikrotik (ex: xxxx.sn.mynetname.net). Funciona de qualquer lugar do mundo, inclusive via Starlink.</p>
                   </div>
                 </div>
               </div>
