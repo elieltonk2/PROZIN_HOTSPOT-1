@@ -24,7 +24,10 @@ import {
   Unlock,
   Eye,
   EyeOff,
-  Rocket
+  Rocket,
+  ExternalLink,
+  Terminal as TerminalIcon,
+  Monitor
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 
@@ -127,7 +130,7 @@ export default function App() {
     });
     localStorage.setItem('selected_device_id', device.id);
     setIsConnected(false);
-    setConnectionError(null);
+    setError(null);
   };
 
   const handleAddDevice = async (newDevice: Omit<Device, 'id'>) => {
@@ -241,6 +244,9 @@ export default function App() {
       setNewDeviceData({ name: '', host: '', user: 'admin', password: '', port: '8728' });
     }
   };
+  const [testResult, setTestResult] = useState<{success: boolean, message: string} | null>(null);
+
+  const handleTestPort = async () => {
     setLoading(true);
     setTestResult(null);
     try {
@@ -1561,6 +1567,82 @@ export default function App() {
                     )}
                   </div>
                 </div>
+              </div>
+
+              {/* Winbox Connection Card */}
+              <div className="mt-12 grid grid-cols-1 md:grid-cols-2 gap-8">
+                <motion.div 
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.2 }}
+                  className="p-8 border border-line bg-zinc-900/50 relative overflow-hidden group"
+                >
+                  <div className="flex justify-between items-start mb-6">
+                    <div>
+                      <h3 className="font-bold uppercase tracking-widest text-[10px] text-primary mb-1">Acesso Winbox</h3>
+                      <p className="text-xs opacity-40">Conecte via software desktop</p>
+                    </div>
+                    <div className="p-3 bg-primary/10 text-primary">
+                      <Monitor size={20} />
+                    </div>
+                  </div>
+                  
+                  <div className="space-y-4 mb-8">
+                    <div className="p-4 bg-black/40 border border-white/5 rounded-lg">
+                      <p className="text-[9px] uppercase font-bold opacity-30 mb-1">Endereço Winbox</p>
+                      <p className="font-mono text-sm text-white break-all">{config.host}</p>
+                    </div>
+                    <div className="grid grid-cols-2 gap-4">
+                      <div className="p-4 bg-black/40 border border-white/5 rounded-lg">
+                        <p className="text-[9px] uppercase font-bold opacity-30 mb-1">Usuário</p>
+                        <p className="font-mono text-sm text-white">{config.user}</p>
+                      </div>
+                      <div className="p-4 bg-black/40 border border-white/5 rounded-lg">
+                        <p className="text-[9px] uppercase font-bold opacity-30 mb-1">Senha</p>
+                        <p className="font-mono text-sm text-white">{config.password ? '******' : '(vazio)'}</p>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-3">
+                    <button 
+                      onClick={() => {
+                        navigator.clipboard.writeText(config.host);
+                        alert('Endereço copiado para o Winbox!');
+                      }}
+                      className="flex items-center justify-center gap-2 py-3 border border-white/10 text-[10px] font-bold uppercase tracking-widest hover:bg-white/5 transition-all"
+                    >
+                      Copiar IP
+                    </button>
+                    <a 
+                      href={`winbox://${config.host};${config.user};${config.password}`}
+                      className="flex items-center justify-center gap-2 py-3 bg-primary text-bg text-[10px] font-bold uppercase tracking-widest hover:opacity-90 transition-all"
+                    >
+                      <ExternalLink size={14} />
+                      Abrir Winbox
+                    </a>
+                  </div>
+                  <p className="mt-4 text-[8px] opacity-30 italic text-center">
+                    Nota: Requer Winbox instalado e porta 8291 aberta no Firewall.
+                  </p>
+                </motion.div>
+
+                {/* Quick Stats / Info */}
+                <motion.div 
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.3 }}
+                  className="p-8 border border-line bg-primary/5 flex flex-col justify-center"
+                >
+                  <h3 className="font-bold uppercase tracking-widest text-[10px] text-primary mb-4">Dica de Acesso</h3>
+                  <p className="text-sm opacity-60 leading-relaxed">
+                    O endereço acima é o mesmo que você usa para conectar este App. Se você estiver usando o <b>DNS Cloud</b>, o Winbox também funcionará de qualquer lugar do mundo através dele.
+                  </p>
+                  <div className="mt-6 p-4 bg-black/20 border border-primary/10 rounded text-[10px] opacity-50">
+                    Comando Terminal MikroTik para abrir porta Winbox:<br/>
+                    <code className="text-primary">/ip firewall filter add chain=input protocol=tcp dst-port=8291 action=accept</code>
+                  </div>
+                </motion.div>
               </div>
             </motion.div>
           )}
