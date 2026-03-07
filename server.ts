@@ -18,23 +18,23 @@ async function startServer() {
 
   const DEVICES_FILE = path.resolve(__dirname, "devices.json");
 
-  // Helper para ler dispositivos
+  // Funções de persistência
   const readDevices = () => {
     if (!fs.existsSync(DEVICES_FILE)) return [];
     try {
-      return JSON.parse(fs.readFileSync(DEVICES_FILE, "utf-8"));
+      const data = fs.readFileSync(DEVICES_FILE, "utf-8");
+      return JSON.parse(data);
     } catch (e) {
       return [];
     }
   };
 
-  // Helper para salvar dispositivos
   const saveDevices = (devices: any[]) => {
     fs.writeFileSync(DEVICES_FILE, JSON.stringify(devices, null, 2));
   };
 
   // ==========================================
-  // ROTAS DE GERENCIAMENTO DE DISPOSITIVOS
+  // GERENCIAMENTO DE DISPOSITIVOS (MIKROTIKS)
   // ==========================================
 
   app.get("/api/devices", (req, res) => {
@@ -43,11 +43,18 @@ async function startServer() {
 
   app.post("/api/devices", (req, res) => {
     const { name, host, user, password, port = 8728 } = req.body;
-    if (!name || !host || !user || !password) {
-      return res.status(400).json({ success: false, message: "Campos obrigatórios faltando." });
+    if (!name || !host || !user) {
+      return res.status(400).json({ success: false, message: "Nome, Host e Usuário são obrigatórios." });
     }
     const devices = readDevices();
-    const newDevice = { id: Date.now().toString(), name, host, user, password, port };
+    const newDevice = { 
+      id: Date.now().toString(), 
+      name, 
+      host: host.trim().replace(/[\[\]]/g, ''), 
+      user, 
+      password: password || '', 
+      port: port.toString() 
+    };
     devices.push(newDevice);
     saveDevices(devices);
     res.json({ success: true, device: newDevice });
@@ -105,7 +112,8 @@ async function startServer() {
 
     socket.on("error", (err) => {
       socket.destroy();
-      res.status(500).json({ success: false, message: `Erro: ${err.message}` });
+      console.error(`[PORT TEST] Falha ao conectar em ${cleanHost}:${port}:`, err.message);
+      res.status(500).json({ success: false, message: `Erro de conexão: ${err.message}. Verifique se o IP está correto e se o Firewall da MikroTik permite este acesso.` });
     });
 
     socket.connect({ port: parseInt(port), host: cleanHost });
