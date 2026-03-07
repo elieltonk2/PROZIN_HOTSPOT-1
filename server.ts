@@ -89,7 +89,25 @@ async function startServer() {
       await client.close();
       res.json({ success: true, message: "Conectado com sucesso!" });
     } catch (error: any) {
-      res.status(500).json({ success: false, message: error.message || "Erro de conexão." });
+      console.error(`[MIKROTIK CONNECT ERROR] ${cleanHost}:`, error);
+      let customMessage = error.message || "Erro de conexão.";
+      let hint = "";
+
+      if (customMessage.includes("ECONNREFUSED")) {
+        customMessage = "Conexão recusada pela MikroTik.";
+        hint = " Verifique se o serviço API (porta " + port + ") está habilitado em 'IP > Services'.";
+      } else if (customMessage.includes("ETIMEDOUT")) {
+        customMessage = "Tempo de conexão esgotado.";
+        hint = " Verifique se o IP/Host está correto e se o Firewall da MikroTik permite acesso externo na porta " + port + ".";
+      } else if (customMessage.includes("EHOSTUNREACH")) {
+        customMessage = "Host inalcançável.";
+        hint = " O servidor não conseguiu encontrar o caminho até sua MikroTik. Verifique se ela está online e se o IP/DNS está correto.";
+      } else if (customMessage.includes("invalid user name or password")) {
+        customMessage = "Usuário ou senha inválidos.";
+        hint = " Verifique as credenciais de acesso.";
+      }
+
+      res.status(500).json({ success: false, message: customMessage + hint });
     }
   });
 
@@ -101,7 +119,9 @@ async function startServer() {
     socket.setTimeout(10000);
 
     socket.on("connect", () => {
+      const remoteAddress = socket.remoteAddress;
       socket.destroy();
+      console.log(`[PORT TEST] Sucesso ao conectar em ${cleanHost} (${remoteAddress}):${port}`);
       res.json({ success: true, message: "Porta aberta! Mikrotik visível." });
     });
 
@@ -113,7 +133,20 @@ async function startServer() {
     socket.on("error", (err) => {
       socket.destroy();
       console.error(`[PORT TEST] Falha ao conectar em ${cleanHost}:${port}:`, err.message);
-      res.status(500).json({ success: false, message: `Erro de conexão: ${err.message}. Verifique se o IP está correto e se o Firewall da MikroTik permite este acesso.` });
+      
+      let hint = "";
+      const isPrivate = cleanHost.startsWith('192.168.') || cleanHost.startsWith('10.') || cleanHost.startsWith('172.');
+      if (isPrivate) {
+        hint = " Você está usando um IP privado (local). O servidor na nuvem não consegue acessar sua rede local diretamente. Use o IP Público, DDNS (IP > Cloud) ou um Túnel VPN.";
+      } else if (err.message.includes('ECONNREFUSED')) {
+        hint = " O Mikrotik recusou a conexão. Verifique em 'IP > Services' se o serviço 'api' está habilitado e na porta " + port + ".";
+      } else if (err.message.includes('ETIMEDOUT')) {
+        hint = " A conexão expirou. Verifique se o Firewall do Mikrotik permite conexões na porta " + port + " vindas da internet (Chain Input).";
+      } else if (err.message.includes('EHOSTUNREACH')) {
+        hint = " O endereço IP ou Host não foi encontrado na internet. Verifique se digitou corretamente.";
+      }
+
+      res.status(500).json({ success: false, message: `Erro de conexão: ${err.message}.${hint}` });
     });
 
     socket.connect({ port: parseInt(port), host: cleanHost });
