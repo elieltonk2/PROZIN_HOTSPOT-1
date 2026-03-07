@@ -32,7 +32,7 @@ import {
   CheckCircle2,
   AlertCircle
 } from 'lucide-react';
-import { motion, AnimatePresence } from 'motion/react';
+import { motion, AnimatePresence } from 'framer-motion';
 
 const Logo = ({ size = 32, className = "", src = null }: { size?: number, className?: string, src?: string | null }) => {
   if (src) {
@@ -549,11 +549,7 @@ export default function App() {
   if (showWelcome) {
     return (
       <div className="min-h-screen bg-black flex items-center justify-center p-4">
-        <motion.div 
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="w-full max-lg bg-zinc-950 border border-primary/20 p-8 shadow-2xl relative overflow-hidden"
-        >
+        <div className="w-full max-w-lg bg-zinc-950 border border-primary/20 p-8 shadow-2xl relative overflow-hidden">
           <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-primary to-transparent opacity-50" />
           
           <div className="flex flex-col items-center text-center space-y-6">
@@ -598,7 +594,7 @@ export default function App() {
               COMEÇAR AGORA
             </button>
           </div>
-        </motion.div>
+        </div>
       </div>
     );
   }
@@ -606,11 +602,7 @@ export default function App() {
   if (isLocked) {
     return (
       <div className="min-h-screen bg-black flex items-center justify-center p-4">
-        <motion.div 
-          initial={{ opacity: 0, scale: 0.9 }}
-          animate={{ opacity: 1, scale: 1 }}
-          className="w-full max-w-md bg-zinc-950 border border-white/5 p-8 shadow-2xl text-center"
-        >
+        <div className="w-full max-w-md bg-zinc-950 border border-white/5 p-8 shadow-2xl text-center">
           <div className="flex justify-center mb-6">
             <div className="p-4 bg-zinc-900 rounded-full text-primary">
               <Lock size={40} />
@@ -648,7 +640,7 @@ export default function App() {
               DESBLOQUEAR
             </button>
           </form>
-        </motion.div>
+        </div>
       </div>
     );
   }
@@ -656,11 +648,7 @@ export default function App() {
   if (!isConnected) {
     return (
       <div className="min-h-screen bg-black flex items-center justify-center p-4">
-        <motion.div 
-          initial={{ opacity: 0, scale: 0.9 }}
-          animate={{ opacity: 1, scale: 1 }}
-          className="w-full max-w-md bg-zinc-950 shadow-2xl overflow-hidden border border-white/5"
-        >
+        <div className="w-full max-w-md bg-zinc-950 shadow-2xl overflow-hidden border border-white/5">
           {/* Header */}
           <div className="bg-zinc-950 p-3 flex items-center justify-between text-primary shadow-lg border-b border-primary/20">
             <div className="flex items-center gap-2">
@@ -818,7 +806,7 @@ export default function App() {
           >
             {loading ? <RefreshCw className="animate-spin" size={18} /> : 'ENTRAR'}
           </button>
-        </motion.div>
+        </div>
       </div>
     );
   }
