@@ -42,10 +42,19 @@ O **PROZIN_HOTSPOT** é uma ferramenta web moderna e responsiva desenvolvida par
    ```bash
    npm install
    ```
-3. Inicie o servidor de desenvolvimento:
+3. Configure as variáveis de ambiente (opcional):
+   ```bash
+   cp .env.example .env
+   ```
+4. Inicie o servidor:
    ```bash
    npm run dev
    ```
+
+---
+
+## 💾 Armazenamento de Dados
+O sistema armazena as configurações das MikroTiks localmente no arquivo `devices.json`. Este arquivo é criado automaticamente na primeira execução e **não deve ser enviado para o GitHub** (já incluído no `.gitignore`).
 
 ---
 
