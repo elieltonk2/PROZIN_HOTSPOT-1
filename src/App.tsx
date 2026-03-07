@@ -26,8 +26,11 @@ import {
   EyeOff,
   Rocket,
   ExternalLink,
+  Activity,
   Terminal as TerminalIcon,
-  Monitor
+  Monitor,
+  CheckCircle2,
+  AlertCircle
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 
@@ -228,6 +231,77 @@ export default function App() {
   }, [profiles]);
 
   const [isAddDeviceModalOpen, setIsAddDeviceModalOpen] = useState(false);
+  const [isDiagnosticModalOpen, setIsDiagnosticModalOpen] = useState(false);
+  const [diagnosticSteps, setDiagnosticSteps] = useState<{name: string, status: 'pending' | 'loading' | 'success' | 'error', message?: string}[]>([]);
+  const [serverPublicIp, setServerPublicIp] = useState<string>('');
+
+  const runDiagnostic = async () => {
+    setIsDiagnosticModalOpen(true);
+    setDiagnosticSteps([
+      { name: 'Verificando IP do Servidor', status: 'loading' },
+      { name: 'Testando Acesso à Porta 8728', status: 'pending' },
+      { name: 'Tentando Login na API', status: 'pending' }
+    ]);
+
+    try {
+      // Step 1: Get Server IP
+      const ipRes = await fetch('/api/utils/my-ip');
+      const ipData = await ipRes.json();
+      setServerPublicIp(ipData.ip);
+      setDiagnosticSteps(prev => [
+        { ...prev[0], status: 'success', message: `IP: ${ipData.ip}` },
+        { ...prev[1], status: 'loading' },
+        prev[2]
+      ]);
+
+      // Step 2: Test Port
+      const portRes = await fetch('/api/mikrotik/test-port', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ host: config.host, port: config.port })
+      });
+      const portData = await portRes.json();
+      
+      if (portData.success) {
+        setDiagnosticSteps(prev => [
+          prev[0],
+          { ...prev[1], status: 'success', message: 'Porta Aberta' },
+          { ...prev[2], status: 'loading' }
+        ]);
+
+        // Step 3: Test Login
+        const connRes = await fetch('/api/mikrotik/connect', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(config)
+        });
+        const connData = await connRes.json();
+        
+        if (connData.success) {
+          setDiagnosticSteps(prev => [
+            prev[0],
+            prev[1],
+            { ...prev[2], status: 'success', message: 'Login OK' }
+          ]);
+        } else {
+          setDiagnosticSteps(prev => [
+            prev[0],
+            prev[1],
+            { ...prev[2], status: 'error', message: connData.message }
+          ]);
+        }
+      } else {
+        setDiagnosticSteps(prev => [
+          prev[0],
+          { ...prev[1], status: 'error', message: portData.message },
+          { ...prev[2], status: 'pending' }
+        ]);
+      }
+    } catch (err: any) {
+      setDiagnosticSteps(prev => prev.map(s => s.status === 'loading' ? { ...s, status: 'error', message: 'Falha na requisição' } : s));
+    }
+  };
+
   const [newDeviceData, setNewDeviceData] = useState({
     name: '',
     host: '',
@@ -677,15 +751,28 @@ export default function App() {
               </div>
 
               {error && (
-                <div className="p-3 bg-red-950/30 text-red-500 text-[10px] font-bold uppercase tracking-widest border border-red-900/50 flex items-center gap-2">
-                  <ShieldAlert size={14} />
-                  <div className="flex-1">
-                    {error}
-                    {error.includes('192.168') && (
-                      <p className="mt-2 text-[8px] opacity-60 normal-case">Dica: IPs 192.168.x.x são locais. Use o IPv6 ou DNS Cloud para acesso remoto.</p>
-                    )}
+                <motion.div 
+                  initial={{ opacity: 0, x: -10 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  className="p-4 bg-red-500/10 border border-red-500/20 text-red-400 text-xs flex flex-col gap-3"
+                >
+                  <div className="flex items-start gap-3">
+                    <ShieldAlert size={18} className="shrink-0" />
+                    <div className="flex-1">
+                      <p className="leading-relaxed font-bold uppercase text-[10px] tracking-widest">{error}</p>
+                      {error.includes('192.168') && (
+                        <p className="mt-2 text-[9px] opacity-60 normal-case italic">Dica: IPs 192.168.x.x são locais. Use o IPv6 ou DNS Cloud para acesso remoto.</p>
+                      )}
+                    </div>
                   </div>
-                </div>
+                  <button 
+                    type="button"
+                    onClick={runDiagnostic}
+                    className="self-end px-3 py-1.5 bg-red-500/20 hover:bg-red-500/30 text-red-300 font-bold uppercase tracking-widest text-[9px] transition-all"
+                  >
+                    Executar Diagnóstico
+                  </button>
+                </motion.div>
               )}
 
               <div className="flex flex-col gap-4">
@@ -1923,6 +2010,81 @@ export default function App() {
                   Salvar Dispositivo
                 </button>
               </form>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
+      {/* Modal de Diagnóstico */}
+      <AnimatePresence>
+        {isDiagnosticModalOpen && (
+          <div className="fixed inset-0 z-[110] flex items-center justify-center p-4">
+            <motion.div 
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => setIsDiagnosticModalOpen(false)}
+              className="absolute inset-0 bg-bg/90 backdrop-blur-md"
+            />
+            <motion.div 
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.95 }}
+              className="relative w-full max-w-lg bg-zinc-900 border border-white/10 p-8 shadow-2xl"
+            >
+              <div className="flex justify-between items-center mb-8">
+                <div className="flex items-center gap-3">
+                  <Activity className="text-primary" size={24} />
+                  <h3 className="font-serif italic text-2xl">Diagnóstico de Conexão</h3>
+                </div>
+                <button onClick={() => setIsDiagnosticModalOpen(false)} className="opacity-40 hover:opacity-100 transition-all">
+                  <X size={20} />
+                </button>
+              </div>
+
+              <div className="space-y-6">
+                {diagnosticSteps.map((step, idx) => (
+                  <div key={idx} className="flex items-center justify-between p-4 bg-black/20 border border-white/5 rounded-lg">
+                    <div className="flex items-center gap-4">
+                      {step.status === 'loading' && <RefreshCw size={16} className="animate-spin text-primary" />}
+                      {step.status === 'success' && <CheckCircle2 size={16} className="text-emerald-500" />}
+                      {step.status === 'error' && <AlertCircle size={16} className="text-red-500" />}
+                      {step.status === 'pending' && <div className="w-4 h-4 rounded-full border border-white/20" />}
+                      <span className={`text-sm ${step.status === 'error' ? 'text-red-400' : 'text-white/80'}`}>{step.name}</span>
+                    </div>
+                    {step.message && (
+                      <span className="text-[10px] font-mono opacity-40">{step.message}</span>
+                    )}
+                  </div>
+                ))}
+              </div>
+
+              {diagnosticSteps.some(s => s.status === 'error') && (
+                <div className="mt-8 p-6 bg-primary/5 border border-primary/20 rounded-lg">
+                  <h4 className="flex items-center gap-2 text-primary font-bold uppercase tracking-widest text-[10px] mb-4">
+                    <Info size={14} />
+                    Como resolver:
+                  </h4>
+                  <ul className="space-y-3 text-xs opacity-70 list-disc pl-4">
+                    <li>
+                      Libere o IP do servidor no Firewall da MikroTik: <br/>
+                      <code className="text-primary font-mono block mt-1 bg-black/40 p-2 rounded">
+                        /ip firewall filter add chain=input src-address={serverPublicIp || 'IP_DO_SERVIDOR'} protocol=tcp dst-port=8728 action=accept place-before=0
+                      </code>
+                    </li>
+                    <li>Verifique se o serviço <b>API</b> está ativo em <b>IP &gt; Services</b>.</li>
+                    <li>Se estiver usando IPv6, use o menu <b>IPv6 &gt; Firewall</b> para liberar a porta.</li>
+                    <li>Certifique-se de que o usuário e senha estão corretos.</li>
+                  </ul>
+                </div>
+              )}
+
+              <button 
+                onClick={() => setIsDiagnosticModalOpen(false)}
+                className="w-full bg-white/5 hover:bg-white/10 text-white py-4 font-bold uppercase tracking-widest text-xs transition-all mt-8"
+              >
+                Fechar Diagnóstico
+              </button>
             </motion.div>
           </div>
         )}
