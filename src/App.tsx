@@ -117,14 +117,17 @@ export default function App() {
 
   const handleSelectDevice = (device: Device) => {
     setSelectedDeviceId(device.id);
+    // Limpeza extra do host para garantir que DNS Cloud funcione
+    const cleanedHost = device.host.trim().replace(/[\[\]]/g, '');
     setConfig({
-      host: device.host,
+      host: cleanedHost,
       user: device.user,
       password: device.password,
-      port: device.port
+      port: device.port || '8728'
     });
     localStorage.setItem('selected_device_id', device.id);
-    setIsConnected(false); // Resetar conexão ao trocar
+    setIsConnected(false);
+    setConnectionError(null);
   };
 
   const handleAddDevice = async (newDevice: Omit<Device, 'id'>) => {
@@ -221,9 +224,23 @@ export default function App() {
     }
   }, [profiles]);
 
-  const [testResult, setTestResult] = useState<{success: boolean, message: string} | null>(null);
+  const [isAddDeviceModalOpen, setIsAddDeviceModalOpen] = useState(false);
+  const [newDeviceData, setNewDeviceData] = useState({
+    name: '',
+    host: '',
+    user: 'admin',
+    password: '',
+    port: '8728'
+  });
 
-  const handleTestPort = async () => {
+  const handleAddDeviceSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    const success = await handleAddDevice(newDeviceData);
+    if (success) {
+      setIsAddDeviceModalOpen(false);
+      setNewDeviceData({ name: '', host: '', user: 'admin', password: '', port: '8728' });
+    }
+  };
     setLoading(true);
     setTestResult(null);
     try {
@@ -317,6 +334,18 @@ export default function App() {
     setLoading(true);
     setError(null);
     try {
+      // Testar porta antes de tentar conexão pesada
+      const portRes = await fetch('/api/mikrotik/test-port', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ host: config.host, port: config.port })
+      });
+      const portData = await portRes.json();
+      
+      if (!portData.success) {
+        throw new Error(`A porta ${config.port} está fechada no host ${config.host}. Verifique se o serviço API está ativo na MikroTik.`);
+      }
+
       const res = await fetch('/api/mikrotik/connect', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -328,11 +357,10 @@ export default function App() {
         setActiveTab('dashboard');
         fetchData(true);
       } else {
-        // Show the specific error from Mikrotik
         setError(data.message || 'Erro desconhecido ao conectar ao Mikrotik.');
       }
-    } catch (err) {
-      setError('Não foi possível alcançar o servidor do App. Verifique sua internet ou se o servidor está rodando.');
+    } catch (err: any) {
+      setError(err.message || 'Não foi possível alcançar o servidor do App.');
     } finally {
       setLoading(false);
     }
@@ -1026,18 +1054,10 @@ export default function App() {
               <div className="flex justify-between items-end mb-12">
                 <div>
                   <h2 className="font-serif italic text-4xl mb-2">Meus Mikrotiks</h2>
-                  <p className="opacity-40 text-sm">Gerencie múltiplos dispositivos e acesse remotamente.</p>
+                  <p className="opacity-40 text-sm">Gerencie múltiplos dispositivos local ou remotamente.</p>
                 </div>
                 <button 
-                  onClick={() => {
-                    const name = prompt('Nome Amigável (ex: Loja Centro):');
-                    const host = prompt('Endereço (IP ou DNS Cloud):');
-                    const user = prompt('Usuário Mikrotik:');
-                    const password = prompt('Senha Mikrotik:');
-                    if (name && host && user) {
-                      handleAddDevice({ name, host, user, password: password || '', port: '8728' });
-                    }
-                  }}
+                  onClick={() => setIsAddDeviceModalOpen(true)}
                   className="flex items-center gap-2 px-6 py-3 bg-primary text-bg font-bold uppercase tracking-widest text-[10px] hover:opacity-90 transition-all"
                 >
                   <PlusCircle size={16} />
@@ -1046,43 +1066,52 @@ export default function App() {
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {devices.map((device) => (
-                  <div 
-                    key={device.id} 
-                    className={`p-6 border transition-all cursor-pointer group relative overflow-hidden ${selectedDeviceId === device.id ? 'bg-primary/10 border-primary' : 'bg-zinc-900/50 border-white/5 hover:border-primary/30'}`}
-                    onClick={() => handleSelectDevice(device)}
-                  >
-                    <div className="flex justify-between items-start mb-4">
-                      <div className={`p-3 rounded-lg ${selectedDeviceId === device.id ? 'bg-primary text-black' : 'bg-zinc-800 text-primary/50'}`}>
-                        <Network size={24} />
-                      </div>
-                      <button 
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          handleDeleteDevice(device.id);
-                        }}
-                        className="p-2 text-zinc-600 hover:text-red-500 transition-colors"
-                      >
-                        <Trash2 size={16} />
-                      </button>
-                    </div>
-                    
-                    <h3 className="font-bold text-lg text-white mb-1">{device.name}</h3>
-                    <p className="text-[10px] font-mono opacity-40 truncate mb-4">{device.host}:{device.port}</p>
-                    
-                    <div className="flex items-center justify-between mt-auto">
-                      <span className={`text-[9px] uppercase font-bold tracking-widest ${selectedDeviceId === device.id ? 'text-primary' : 'opacity-20'}`}>
-                        {selectedDeviceId === device.id ? 'Selecionado' : 'Clique para selecionar'}
-                      </span>
-                      {selectedDeviceId === device.id && isConnected && (
-                        <div className="flex items-center gap-1 text-[9px] text-primary uppercase font-bold">
-                          <div className="w-1.5 h-1.5 bg-primary rounded-full animate-pulse" />
-                          Ativo
+                {devices.map((device) => {
+                  const isLocal = device.host.startsWith('192.168') || device.host.startsWith('10.') || device.host.startsWith('172.');
+                  return (
+                    <div 
+                      key={device.id} 
+                      className={`p-6 border transition-all cursor-pointer group relative overflow-hidden ${selectedDeviceId === device.id ? 'bg-primary/10 border-primary' : 'bg-zinc-900/50 border-white/5 hover:border-primary/30'}`}
+                      onClick={() => handleSelectDevice(device)}
+                    >
+                      <div className="flex justify-between items-start mb-4">
+                        <div className={`p-3 rounded-lg ${selectedDeviceId === device.id ? 'bg-primary text-black' : 'bg-zinc-800 text-primary/50'}`}>
+                          {isLocal ? <Network size={24} /> : <Wifi size={24} />}
                         </div>
-                      )}
+                        <button 
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleDeleteDevice(device.id);
+                          }}
+                          className="p-2 text-zinc-600 hover:text-red-500 transition-colors"
+                        >
+                          <Trash2 size={16} />
+                        </button>
+                      </div>
+                      
+                      <h3 className="font-bold text-lg text-white mb-1">{device.name}</h3>
+                      <p className="text-[10px] font-mono opacity-40 truncate mb-2">{device.host}:{device.port}</p>
+                      
+                      <div className="flex items-center gap-2 mb-4">
+                        <span className={`px-2 py-0.5 rounded-full text-[8px] font-bold uppercase tracking-widest ${isLocal ? 'bg-blue-500/20 text-blue-400' : 'bg-purple-500/20 text-purple-400'}`}>
+                          {isLocal ? 'Local' : 'Remoto / Cloud'}
+                        </span>
+                      </div>
+
+                      <div className="flex items-center justify-between mt-auto">
+                        <span className={`text-[9px] uppercase font-bold tracking-widest ${selectedDeviceId === device.id ? 'text-primary' : 'opacity-20'}`}>
+                          {selectedDeviceId === device.id ? 'Selecionado' : 'Clique para selecionar'}
+                        </span>
+                        {selectedDeviceId === device.id && isConnected && (
+                          <div className="flex items-center gap-1 text-[9px] text-primary uppercase font-bold">
+                            <div className="w-1.5 h-1.5 bg-primary rounded-full animate-pulse" />
+                            Ativo
+                          </div>
+                        )}
+                      </div>
                     </div>
-                  </div>
-                ))}
+                  );
+                })}
 
                 {devices.length === 0 && (
                   <div className="col-span-full p-12 border border-dashed border-white/10 text-center opacity-40 italic">
@@ -1721,6 +1750,101 @@ export default function App() {
           )}
         </AnimatePresence>
       </main>
+
+      {/* Modal Adicionar Mikrotik */}
+      <AnimatePresence>
+        {isAddDeviceModalOpen && (
+          <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
+            <motion.div 
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => setIsAddDeviceModalOpen(false)}
+              className="absolute inset-0 bg-bg/80 backdrop-blur-sm"
+            />
+            <motion.div 
+              initial={{ opacity: 0, scale: 0.95, y: 20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, y: 20 }}
+              className="relative w-full max-w-md bg-zinc-900 border border-white/10 p-8 shadow-2xl"
+            >
+              <div className="flex justify-between items-center mb-8">
+                <h3 className="font-serif italic text-2xl">Novo Mikrotik</h3>
+                <button onClick={() => setIsAddDeviceModalOpen(false)} className="opacity-40 hover:opacity-100 transition-all">
+                  <X size={20} />
+                </button>
+              </div>
+
+              <form onSubmit={handleAddDeviceSubmit} className="space-y-6">
+                <div className="space-y-2">
+                  <label className="text-[10px] uppercase font-bold tracking-widest opacity-40">Nome Amigável</label>
+                  <input 
+                    type="text" 
+                    required
+                    placeholder="Ex: Loja Centro"
+                    value={newDeviceData.name}
+                    onChange={e => setNewDeviceData({...newDeviceData, name: e.target.value})}
+                    className="w-full bg-transparent border-b border-white/10 py-2 focus:outline-none focus:border-primary transition-colors font-mono"
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <label className="text-[10px] uppercase font-bold tracking-widest opacity-40">Endereço (IP ou DNS Cloud)</label>
+                  <input 
+                    type="text" 
+                    required
+                    placeholder="Ex: 192.168.1.1 ou xxxx.mynetname.net"
+                    value={newDeviceData.host}
+                    onChange={e => setNewDeviceData({...newDeviceData, host: e.target.value})}
+                    className="w-full bg-transparent border-b border-white/10 py-2 focus:outline-none focus:border-primary transition-colors font-mono"
+                  />
+                  <p className="text-[9px] opacity-30 italic">Use o DNS Cloud para acesso remoto via Starlink/4G.</p>
+                </div>
+
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <label className="text-[10px] uppercase font-bold tracking-widest opacity-40">Usuário</label>
+                    <input 
+                      type="text" 
+                      required
+                      value={newDeviceData.user}
+                      onChange={e => setNewDeviceData({...newDeviceData, user: e.target.value})}
+                      className="w-full bg-transparent border-b border-white/10 py-2 focus:outline-none focus:border-primary transition-colors font-mono"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <label className="text-[10px] uppercase font-bold tracking-widest opacity-40">Porta API</label>
+                    <input 
+                      type="text" 
+                      required
+                      value={newDeviceData.port}
+                      onChange={e => setNewDeviceData({...newDeviceData, port: e.target.value})}
+                      className="w-full bg-transparent border-b border-white/10 py-2 focus:outline-none focus:border-primary transition-colors font-mono"
+                    />
+                  </div>
+                </div>
+
+                <div className="space-y-2">
+                  <label className="text-[10px] uppercase font-bold tracking-widest opacity-40">Senha</label>
+                  <input 
+                    type="password" 
+                    value={newDeviceData.password}
+                    onChange={e => setNewDeviceData({...newDeviceData, password: e.target.value})}
+                    className="w-full bg-transparent border-b border-white/10 py-2 focus:outline-none focus:border-primary transition-colors font-mono"
+                  />
+                </div>
+
+                <button 
+                  type="submit"
+                  className="w-full bg-primary text-bg py-4 font-bold uppercase tracking-widest text-xs hover:opacity-90 transition-all mt-8"
+                >
+                  Salvar Dispositivo
+                </button>
+              </form>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }
