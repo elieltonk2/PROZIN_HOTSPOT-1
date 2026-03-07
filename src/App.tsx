@@ -30,7 +30,8 @@ import {
   Terminal as TerminalIcon,
   Monitor,
   CheckCircle2,
-  AlertCircle
+  AlertCircle,
+  HelpCircle
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
@@ -545,7 +546,13 @@ export default function App() {
     }
   };
 
-  // Force rebuild - v1.0.1
+  const [isHelpModalOpen, setIsHelpModalOpen] = useState(false);
+
+  const copyToClipboard = (text: string, message = 'Copiado para a área de transferência!') => {
+    navigator.clipboard.writeText(text);
+    alert(message);
+  };
+
   if (showWelcome) {
     return (
       <div className="min-h-screen bg-black flex items-center justify-center p-4">
@@ -655,9 +662,17 @@ export default function App() {
               <ShieldCheck size={16} className="text-primary" />
               <span className="font-bold text-sm tracking-tight uppercase">{outletName}</span>
             </div>
-            <button className="hover:bg-white/10 p-1 rounded transition-colors text-zinc-400">
-              <X size={18} />
-            </button>
+            <div className="flex items-center gap-2">
+              <button 
+                onClick={() => setIsHelpModalOpen(true)}
+                className="hover:bg-white/10 p-1 rounded transition-colors text-primary flex items-center gap-1 text-[10px] font-bold uppercase tracking-widest"
+              >
+                <HelpCircle size={14} /> Ajuda
+              </button>
+              <button className="hover:bg-white/10 p-1 rounded transition-colors text-zinc-400">
+                <X size={18} />
+              </button>
+            </div>
           </div>
 
           {/* Body */}
@@ -686,10 +701,18 @@ export default function App() {
                       placeholder="IP ou DNS Cloud"
                       required
                     />
-                    {(config.host.toLowerCase().startsWith('fd') || config.host.toLowerCase().startsWith('fe') || config.host.startsWith('192.168') || config.host.startsWith('10.')) && (
-                      <p className="text-[8px] text-orange-500 mt-1 uppercase font-bold tracking-tighter animate-pulse">
-                        ⚠️ IP Local detectado. Use o DNS Cloud (IP para Cloud) para acesso remoto.
-                      </p>
+                    {(config.host.toLowerCase().startsWith('fd') || config.host.toLowerCase().startsWith('fe') || config.host.startsWith('192.168') || config.host.startsWith('10.') || config.host.startsWith('172.')) && (
+                      <div className="bg-red-500/20 border-2 border-red-500 p-4 rounded-lg mt-4 animate-pulse">
+                        <p className="text-[11px] text-red-400 uppercase font-black tracking-tighter flex items-center gap-2">
+                          <ShieldAlert size={16} /> ATENÇÃO: IP LOCAL DETECTADO
+                        </p>
+                        <p className="text-[10px] text-zinc-300 mt-2 leading-relaxed">
+                          Este aplicativo roda na <b>Nuvem</b> e não consegue "enxergar" seu IP local (192.168.x.x).
+                        </p>
+                        <p className="text-[10px] text-primary mt-2 font-bold">
+                          SOLUÇÃO: Use o "DNS Name" do menu IP {'>'} Cloud da sua MikroTik ou um IP Público/IPv6.
+                        </p>
+                      </div>
                     )}
                   </div>
                   <div className="flex justify-end">
@@ -701,9 +724,32 @@ export default function App() {
                         className="w-full bg-zinc-800 text-white px-3 py-2 rounded border border-white/5 text-right focus:outline-none focus:ring-2 focus:ring-primary transition-all font-mono text-sm"
                       />
                     </div>
+                    {config.port === '3000' && (
+                      <div className="bg-yellow-500/10 border border-yellow-500/20 p-3 rounded mt-2">
+                        <p className="text-[9px] text-yellow-400 uppercase font-bold tracking-widest flex items-center gap-2">
+                          <AlertCircle size={12} /> Porta 3000 Detectada
+                        </p>
+                        <p className="text-[8px] text-yellow-300/70 mt-1 leading-tight">
+                          A porta 3000 é usada por este aplicativo. A porta padrão da API MikroTik é <b>8728</b> (ou 8729 para SSL). Verifique se esta é realmente a porta da sua MikroTik.
+                        </p>
+                      </div>
+                    )}
                   </div>
                 </div>
               </div>
+
+              {/* URL Warning */}
+              {window.location.hostname.match(/^\d+\.\d+\.\d+\.\d+$/) && (
+                <div className="p-4 bg-red-500/10 border border-red-500/20 rounded-lg">
+                  <p className="text-[10px] text-red-400 font-bold uppercase tracking-widest flex items-center gap-2 mb-2">
+                    <ShieldAlert size={14} /> Acesso via IP Detectado
+                  </p>
+                  <p className="text-[11px] text-zinc-400 leading-relaxed">
+                    Você está acessando o aplicativo diretamente via IP (<b>{window.location.hostname}</b>). Para que todas as funções (como OAuth e segurança) funcionem corretamente, utilize sempre a URL oficial do aplicativo: <br/>
+                    <code className="text-primary mt-1 block bg-black/40 p-1 rounded break-all">{window.location.origin}</code>
+                  </p>
+                </div>
+              )}
 
               {/* Login Row */}
               <div className="flex items-center gap-6">
@@ -753,13 +799,22 @@ export default function App() {
                       )}
                     </div>
                   </div>
-                  <button 
-                    type="button"
-                    onClick={runDiagnostic}
-                    className="self-end px-3 py-1.5 bg-red-500/20 hover:bg-red-500/30 text-red-300 font-bold uppercase tracking-widest text-[9px] transition-all"
-                  >
-                    Executar Diagnóstico
-                  </button>
+                      <div className="flex flex-col gap-2 mt-3">
+                        <button 
+                          type="button"
+                          onClick={runDiagnostic}
+                          className="w-full px-3 py-2 bg-red-500/20 hover:bg-red-500/30 text-red-300 font-bold uppercase tracking-widest text-[9px] transition-all border border-red-500/30"
+                        >
+                          Executar Diagnóstico Completo
+                        </button>
+                        <button 
+                          type="button"
+                          onClick={() => copyToClipboard(`/ip cloud set ddns-enabled=yes\n/ip service enable api\n/ip firewall filter add action=accept chain=input dst-port=8728 protocol=tcp comment="Permitir API Mikrotik (PROZIN)"`, 'Script de correção copiado!')}
+                          className="w-full px-3 py-2 bg-primary/10 hover:bg-primary/20 text-primary font-bold uppercase tracking-widest text-[9px] transition-all border border-primary/20"
+                        >
+                          Copiar Script de Correção Rápida
+                        </button>
+                      </div>
                 </motion.div>
               )}
 
@@ -780,9 +835,21 @@ export default function App() {
                       {testResult.success ? <ShieldCheck size={14} /> : <ShieldAlert size={14} />}
                       <span>{testResult.message}</span>
                     </div>
-                    {!testResult.success && (testResult.message.includes('IPv6') || testResult.message.includes('ENETUNREACH') || testResult.message.includes('suporta')) && (
-                      <div className="bg-black/40 p-2 rounded text-[8px] normal-case font-normal opacity-80">
-                        Dica: O Railway não suporta IPv6. Ative o 'IP para Cloud' no Mikrotik e use o 'DNS Name' no campo acima.
+                    {!testResult.success && (
+                      <div className="bg-black/40 p-2 rounded text-[8px] normal-case font-normal opacity-80 space-y-2">
+                        <p><b>Como resolver:</b></p>
+                        <ul className="list-disc ml-4 space-y-1">
+                          <li>Vá em <b>IP {'>'} Services</b> e ative o serviço <b>api</b> (porta 8728).</li>
+                          <li>Vá em <b>IP {'>'} Cloud</b>, ative <b>DDNS Enabled</b> e use o <b>DNS Name</b> como Host.</li>
+                          <li>Verifique se o <b>Firewall</b> permite conexões na porta 8728 (Chain Input).</li>
+                        </ul>
+                        <button 
+                          type="button"
+                          onClick={() => copyToClipboard(`/ip cloud set ddns-enabled=yes\n/ip service enable api\n/ip firewall filter add action=accept chain=input dst-port=8728 protocol=tcp comment="Permitir API Mikrotik (PROZIN)"`, 'Script de configuração copiado!')}
+                          className="w-full bg-primary/20 hover:bg-primary/30 text-primary py-1.5 rounded text-[8px] font-bold uppercase tracking-widest transition-all mt-1"
+                        >
+                          Copiar Script de Correção
+                        </button>
                       </div>
                     )}
                   </div>
@@ -1689,16 +1756,31 @@ export default function App() {
                     >
                       Copiar IP
                     </button>
+                    <button 
+                      onClick={() => {
+                        navigator.clipboard.writeText(`winbox.exe ${config.host} ${config.user} ${config.password || '""'}`);
+                        alert('Comando Winbox copiado! Cole no CMD ou Executar (Win+R).');
+                      }}
+                      className="flex items-center justify-center gap-2 py-3 border border-white/10 text-[10px] font-bold uppercase tracking-widest hover:bg-white/5 transition-all"
+                    >
+                      Copiar Comando
+                    </button>
+                  </div>
+
+                  <div className="mt-3">
                     <a 
                       href={`winbox://${config.host};${config.user};${config.password}`}
-                      className="flex items-center justify-center gap-2 py-3 bg-primary text-bg text-[10px] font-bold uppercase tracking-widest hover:opacity-90 transition-all"
+                      className="w-full flex items-center justify-center gap-2 py-3 bg-primary text-bg text-[10px] font-bold uppercase tracking-widest hover:opacity-90 transition-all"
                     >
                       <ExternalLink size={14} />
-                      Abrir Winbox
+                      Abrir Winbox (Protocolo)
                     </a>
                   </div>
-                  <p className="mt-4 text-[8px] opacity-30 italic text-center">
-                    Nota: Requer Winbox instalado e porta 8291 aberta no Firewall.
+                  <p className="mt-4 text-[8px] opacity-30 italic text-center leading-relaxed">
+                    Nota: O botão "Abrir Winbox" requer um protocolo registrado no Windows. Se não funcionar, use o botão "Copiar Comando" e cole no menu Executar (Win+R).
+                  </p>
+                  <p className="mt-1 text-[8px] opacity-30 italic text-center">
+                    Requer porta 8291 aberta no Firewall da MikroTik.
                   </p>
                 </motion.div>
 
@@ -2003,6 +2085,91 @@ export default function App() {
         )}
       </AnimatePresence>
 
+      {/* Help Modal */}
+      <AnimatePresence>
+        {isHelpModalOpen && (
+          <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
+            <motion.div 
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => setIsHelpModalOpen(false)}
+              className="absolute inset-0 bg-black/80 backdrop-blur-sm"
+            />
+            <motion.div 
+              initial={{ opacity: 0, scale: 0.9, y: 20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.9, y: 20 }}
+              className="relative w-full max-w-lg bg-zinc-950 border border-white/10 shadow-2xl overflow-hidden"
+            >
+              <div className="p-6 border-b border-white/5 flex items-center justify-between bg-zinc-900">
+                <div className="flex items-center gap-3">
+                  <div className="p-2 bg-primary/20 rounded text-primary">
+                    <HelpCircle size={20} />
+                  </div>
+                  <h3 className="font-bold uppercase tracking-widest text-sm">Como configurar sua MikroTik</h3>
+                </div>
+                <button onClick={() => setIsHelpModalOpen(false)} className="text-zinc-500 hover:text-white">
+                  <X size={20} />
+                </button>
+              </div>
+              
+              <div className="p-6 space-y-6 max-h-[70vh] overflow-y-auto">
+                <div className="space-y-4">
+                  <div className="flex gap-4">
+                    <div className="flex-shrink-0 w-6 h-6 rounded-full bg-primary text-black flex items-center justify-center text-xs font-bold">1</div>
+                    <div className="space-y-1">
+                      <p className="text-sm font-bold text-white">Ativar o serviço API</p>
+                      <p className="text-xs text-zinc-400 leading-relaxed">No Winbox, vá em <b>IP {'>'} Services</b>. Verifique se o serviço <b>api</b> está habilitado (porta 8728). Se estiver usando Starlink ou CGNAT, certifique-se de que não há restrições de IP.</p>
+                    </div>
+                  </div>
+
+                  <div className="flex gap-4">
+                    <div className="flex-shrink-0 w-6 h-6 rounded-full bg-primary text-black flex items-center justify-center text-xs font-bold">2</div>
+                    <div className="space-y-1">
+                      <p className="text-sm font-bold text-white">Configurar Acesso Remoto (DDNS)</p>
+                      <p className="text-xs text-zinc-400 leading-relaxed">Vá em <b>IP {'>'} Cloud</b>. Marque <b>DDNS Enabled</b> e <b>Update Time</b>. Clique em Apply e copie o <b>DNS Name</b> (ex: 123456789.sn.mynetname.net). Use este nome no campo "Host" do App.</p>
+                    </div>
+                  </div>
+
+                  <div className="flex gap-4">
+                    <div className="flex-shrink-0 w-6 h-6 rounded-full bg-primary text-black flex items-center justify-center text-xs font-bold">3</div>
+                    <div className="space-y-1">
+                      <p className="text-sm font-bold text-white">Liberar no Firewall</p>
+                      <p className="text-xs text-zinc-400 leading-relaxed">Vá em <b>IP {'>'} Firewall {'>'} Filter Rules</b>. Adicione uma regra: <b>Chain: input</b>, <b>Protocol: tcp</b>, <b>Dst. Port: 8728</b>, <b>Action: accept</b>. Coloque esta regra no topo da lista.</p>
+                    </div>
+                  </div>
+
+                  <div className="bg-primary/5 border border-primary/20 p-4 rounded-lg space-y-3">
+                    <p className="text-[10px] font-bold text-primary uppercase tracking-widest flex items-center gap-2">
+                      <ShieldCheck size={14} /> Dica de Segurança
+                    </p>
+                    <p className="text-[11px] text-zinc-300 leading-relaxed">
+                      Para maior segurança, no menu <b>IP {'>'} Services</b>, você pode limitar o campo <b>Available From</b> para aceitar apenas o IP do servidor deste App: <code className="bg-black/40 px-1 rounded text-primary">{detectedIP || 'Carregando...'}</code>
+                    </p>
+                    <button 
+                      onClick={() => copyToClipboard(`/ip cloud set ddns-enabled=yes\n/ip service enable api\n/ip firewall filter add action=accept chain=input dst-port=8728 protocol=tcp comment="Permitir API Mikrotik (PROZIN)"`, 'Script copiado! Cole no terminal do Winbox.')}
+                      className="w-full bg-primary text-black py-2 text-[10px] font-bold uppercase tracking-widest hover:opacity-90 transition-all"
+                    >
+                      Copiar Script de Configuração Rápida
+                    </button>
+                  </div>
+                </div>
+              </div>
+
+              <div className="p-4 bg-zinc-900 border-t border-white/5 flex justify-end">
+                <button 
+                  onClick={() => setIsHelpModalOpen(false)}
+                  className="px-6 py-2 bg-primary text-black font-bold uppercase tracking-widest text-xs hover:opacity-90 transition-all"
+                >
+                  Entendi
+                </button>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
       {/* Modal de Diagnóstico */}
       <AnimatePresence>
         {isDiagnosticModalOpen && (
@@ -2056,13 +2223,21 @@ export default function App() {
                   <ul className="space-y-3 text-xs opacity-70 list-disc pl-4">
                     <li>
                       Libere o IP do servidor no Firewall da MikroTik: <br/>
-                      <code className="text-primary font-mono block mt-1 bg-black/40 p-2 rounded">
-                        /ip firewall filter add chain=input src-address={serverPublicIp || 'IP_DO_SERVIDOR'} protocol=tcp dst-port=8728 action=accept place-before=0
-                      </code>
+                      <div className="flex flex-col gap-2 mt-2">
+                        <code className="text-primary font-mono block bg-black/40 p-2 rounded text-[9px] break-all">
+                          /ip firewall filter add chain=input src-address={serverPublicIp || 'IP_DO_SERVIDOR'} protocol=tcp dst-port=8728 action=accept place-before=0
+                        </code>
+                        <button 
+                          onClick={() => copyToClipboard(`/ip firewall filter add chain=input src-address=${serverPublicIp} protocol=tcp dst-port=8728 action=accept place-before=0`, 'Regra de Firewall copiada!')}
+                          className="bg-primary/20 hover:bg-primary/30 text-primary py-1 rounded text-[9px] font-bold uppercase"
+                        >
+                          Copiar Regra
+                        </button>
+                      </div>
                     </li>
-                    <li>Verifique se o serviço <b>API</b> está ativo em <b>IP &gt; Services</b>.</li>
+                    <li>Verifique se o serviço <b>API</b> está ativo em <b>IP &gt; Services</b> (Porta {config.port}).</li>
                     <li>Se estiver usando IPv6, use o menu <b>IPv6 &gt; Firewall</b> para liberar a porta.</li>
-                    <li>Certifique-se de que o usuário e senha estão corretos.</li>
+                    <li>Certifique-se de que o usuário <b>{config.user}</b> tem permissão de 'api' no menu <b>System &gt; Users</b>.</li>
                   </ul>
                 </div>
               )}
