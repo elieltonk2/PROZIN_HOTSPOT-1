@@ -16,6 +16,50 @@ async function startServer() {
   app.use(cors());
   app.use(express.json());
 
+  const DEVICES_FILE = path.resolve(__dirname, "devices.json");
+
+  // Helper para ler dispositivos
+  const readDevices = () => {
+    if (!fs.existsSync(DEVICES_FILE)) return [];
+    try {
+      return JSON.parse(fs.readFileSync(DEVICES_FILE, "utf-8"));
+    } catch (e) {
+      return [];
+    }
+  };
+
+  // Helper para salvar dispositivos
+  const saveDevices = (devices: any[]) => {
+    fs.writeFileSync(DEVICES_FILE, JSON.stringify(devices, null, 2));
+  };
+
+  // ==========================================
+  // ROTAS DE GERENCIAMENTO DE DISPOSITIVOS
+  // ==========================================
+
+  app.get("/api/devices", (req, res) => {
+    res.json(readDevices());
+  });
+
+  app.post("/api/devices", (req, res) => {
+    const { name, host, user, password, port = 8728 } = req.body;
+    if (!name || !host || !user || !password) {
+      return res.status(400).json({ success: false, message: "Campos obrigatórios faltando." });
+    }
+    const devices = readDevices();
+    const newDevice = { id: Date.now().toString(), name, host, user, password, port };
+    devices.push(newDevice);
+    saveDevices(devices);
+    res.json({ success: true, device: newDevice });
+  });
+
+  app.delete("/api/devices/:id", (req, res) => {
+    let devices = readDevices();
+    devices = devices.filter((d: any) => d.id !== req.params.id);
+    saveDevices(devices);
+    res.json({ success: true });
+  });
+
   // ==========================================
   // ROTAS DA API MIKROTIK
   // ==========================================
@@ -109,21 +153,78 @@ async function startServer() {
     } catch (error: any) { res.status(500).json({ success: false, message: error.message }); }
   });
 
-  // Configurar IPv6 PPPoE
+  // Configurar IPv6 PPPoE e Bridge
   app.post("/api/mikrotik/setup-ipv6-pppoe", async (req, res) => {
     let { host, user, password, port = 8728 } = req.body;
     const client = new RouterOSAPI({ host: host.replace(/[\[\]]/g, ''), user, password, port: parseInt(port), timeout: 30 });
     try {
       await client.connect();
-      const poolName = "pool-pppoe";
-      await client.write(["/ipv6/dhcp-client/add", "=interface=ether1", "=request=prefix", `=pool-name=${poolName}`, "=pool-prefix-length=64", "=add-default-route=yes"]).catch(() => {
-        return client.write(["/ipv6/dhcp-client/set", "=.id=[find interface=ether1]", `=pool-name=${poolName}`, "=pool-prefix-length=64"]);
-      });
-      await client.write(["/ppp/profile/set", "=.id=[find name=default]", `=dhcpv6-pd-pool=${poolName}`, `=remote-ipv6-prefix-pool=${poolName}`]);
-      await client.write(["/ipv6/nd/set", "=.id=[find default=yes]", "=managed-address-configuration=yes", "=other-configuration=yes"]);
+      const poolName = "pool-ipv6";
+      
+      // 1. Configurar DHCPv6 Client na ether1 (WAN) para receber o prefixo /56
+      // Tentamos encontrar se já existe, se não, adicionamos
+      const dhcpClients = await client.write("/ipv6/dhcp-client/print");
+      const existingClient = (dhcpClients as any[]).find(c => c.interface === 'ether1');
+      
+      if (!existingClient) {
+        await client.write([
+          "/ipv6/dhcp-client/add", 
+          "=interface=ether1", 
+          "=request=prefix", 
+          `=pool-name=${poolName}`, 
+          "=pool-prefix-length=64", 
+          "=add-default-route=yes",
+          "=use-peer-dns=yes"
+        ]);
+      } else {
+        await client.write([
+          "/ipv6/dhcp-client/set", 
+          `=.id=${existingClient['.id']}`, 
+          `=pool-name=${poolName}`, 
+          "=pool-prefix-length=64"
+        ]);
+      }
+
+      // 2. Configurar Endereço IPv6 na Bridge (LAN) usando o pool
+      const addresses = await client.write("/ipv6/address/print");
+      const bridgeAddr = (addresses as any[]).find(a => a.interface === 'bridge1_REDELOCAL' || a.interface === 'bridge');
+      const targetInterface = bridgeAddr ? bridgeAddr.interface : 'bridge1_REDELOCAL';
+
+      if (!bridgeAddr) {
+        await client.write([
+          "/ipv6/address/add",
+          `=interface=${targetInterface}`,
+          `=from-pool=${poolName}`,
+          "=advertise=yes"
+        ]).catch(() => {});
+      }
+
+      // 3. Configurar ND (Neighbor Discovery) na Bridge
+      await client.write([
+        "/ipv6/nd/set",
+        "=.id=[find default=yes]",
+        "=managed-address-configuration=yes",
+        "=other-configuration=yes"
+      ]);
+
+      // 4. Configurar Perfil PPP para entregar IPv6 aos clientes
+      // Setamos no perfil 'default' e tentamos no 'default-encryption' também
+      const pppProfiles = ['default', 'default-encryption'];
+      for (const profileName of pppProfiles) {
+        await client.write([
+          "/ppp/profile/set",
+          `=.id=[find name=${profileName}]`,
+          `=dhcpv6-pd-pool=${poolName}`,
+          `=remote-ipv6-prefix-pool=${poolName}`
+        ]).catch(() => {});
+      }
+
       await client.close();
-      res.json({ success: true, message: "IPv6 PPPoE configurado!" });
-    } catch (error: any) { res.status(500).json({ success: false, message: error.message }); }
+      res.json({ success: true, message: "IPv6 configurado para Bridge e PPPoE (Pool: " + poolName + ")" });
+    } catch (error: any) { 
+      if (client) await client.close().catch(() => {});
+      res.status(500).json({ success: false, message: error.message }); 
+    }
   });
 
   // Listar Perfis
