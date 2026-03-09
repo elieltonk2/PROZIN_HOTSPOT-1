@@ -5,6 +5,9 @@ import path from "path";
 import fs from "fs";
 import { fileURLToPath } from "url";
 import net from "net";
+import { Client, LocalAuth } from 'whatsapp-web.js';
+import qrcode from 'qrcode';
+import cron from 'node-cron';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -17,6 +20,133 @@ async function startServer() {
   app.use(express.json());
 
   const DEVICES_FILE = path.resolve(__dirname, "devices.json");
+  const CUSTOMERS_FILE = path.resolve(__dirname, "customers.json");
+  const SETTINGS_FILE = path.resolve(__dirname, "settings.json");
+
+  // Inicializar arquivos se não existirem
+  if (!fs.existsSync(CUSTOMERS_FILE)) fs.writeFileSync(CUSTOMERS_FILE, JSON.stringify([]));
+  if (!fs.existsSync(SETTINGS_FILE)) fs.writeFileSync(SETTINGS_FILE, JSON.stringify({ pixKey: "", pixName: "PROZIN", pixCity: "SAO PAULO" }));
+
+  // --- WHATSAPP SETUP ---
+  let whatsappQr = "";
+  let whatsappStatus = "loading";
+  console.log('Iniciando WhatsApp...');
+
+  const client = new Client({
+    authStrategy: new LocalAuth(),
+    puppeteer: {
+      args: ['--no-sandbox', '--disable-setuid-sandbox', '--disable-dev-shm-usage'],
+    }
+  });
+
+  client.on('qr', (qr) => {
+    whatsappQr = qr;
+    whatsappStatus = "qr_ready";
+    console.log('WhatsApp QR Code gerado. Tamanho:', qr.length);
+  });
+
+  client.on('ready', () => {
+    whatsappQr = "";
+    whatsappStatus = "connected";
+    console.log('WhatsApp pronto e conectado!');
+  });
+
+  client.on('disconnected', () => {
+    whatsappStatus = "disconnected";
+    console.log('WhatsApp desconectado.');
+  });
+
+  client.initialize().catch(err => {
+    whatsappStatus = "error";
+    console.error("Erro ao iniciar WhatsApp:", err);
+  });
+
+  // --- PIX HELPER ---
+  function crc16(data: string): string {
+    let crc = 0xFFFF;
+    for (let i = 0; i < data.length; i++) {
+      crc ^= data.charCodeAt(i) << 8;
+      for (let j = 0; j < 8; j++) {
+        if ((crc & 0x8000) !== 0) {
+          crc = (crc << 1) ^ 0x1021;
+        } else {
+          crc <<= 1;
+        }
+      }
+    }
+    return (crc & 0xFFFF).toString(16).toUpperCase().padStart(4, '0');
+  }
+
+  function generatePixPayload(key: string, name: string, city: string, amount: number, description: string) {
+    const amountStr = amount.toFixed(2);
+    const merchantAccount = [
+      "0014br.gov.bcb.pix",
+      "01", key.length.toString().padStart(2, '0'), key
+    ].join("");
+
+    const additionalData = [
+      "05", description.length.toString().padStart(2, '0'), description
+    ].join("");
+
+    const payload = [
+      "000201",
+      "26", merchantAccount.length.toString().padStart(2, '0'), merchantAccount,
+      "52040000",
+      "5303986",
+      "54", amountStr.length.toString().padStart(2, '0'), amountStr,
+      "5802BR",
+      "59", name.length.toString().padStart(2, '0'), name,
+      "60", city.length.toString().padStart(2, '0'), city,
+      "62", additionalData.length.toString().padStart(2, '0'), additionalData,
+      "6304"
+    ].join("");
+
+    return payload + crc16(payload);
+  }
+
+  // --- CRON JOBS ---
+  cron.schedule('0 9 * * *', async () => {
+    console.log("Iniciando rotina de cobrança e suspensão...");
+    const customers = JSON.parse(fs.readFileSync(CUSTOMERS_FILE, "utf8"));
+    const settings = JSON.parse(fs.readFileSync(SETTINGS_FILE, "utf8"));
+    const devices = readDevices();
+    if (devices.length === 0) return;
+    const config = devices[0];
+    
+    const today = new Date();
+    const currentDay = today.getDate();
+
+    for (const customer of customers) {
+      if (customer.dueDay === currentDay && whatsappStatus === "connected") {
+        const pix = generatePixPayload(settings.pixKey, settings.pixName, settings.pixCity, customer.amount, "INTERNET");
+        const message = `Olá ${customer.name}! 🚀\n\nSua fatura de internet vence hoje.\nValor: R$ ${customer.amount.toFixed(2)}\n\nChave PIX: ${settings.pixKey}\n\nCopie e cole o código abaixo:\n\n${pix}`;
+        client.sendMessage(`${customer.phone}@c.us`, message);
+        customer.lastBillingDate = today.toISOString().split('T')[0];
+      }
+
+      const dueDate = new Date();
+      dueDate.setDate(customer.dueDay);
+      const diffTime = today.getTime() - dueDate.getTime();
+      const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+
+      if (diffDays >= 3 && customer.status !== "paid") {
+        const mk = new RouterOSAPI({ host: config.host, user: config.user, password: config.password, port: parseInt(config.port) });
+        try {
+          await mk.connect();
+          const users = await mk.write(["/ip/hotspot/user/print", `?name=${customer.mikrotikUser}`]);
+          if (users.length > 0) {
+            await mk.write(["/ip/hotspot/user/set", `=.id=${users[0]['.id']}`, "=disabled=yes"]);
+            customer.status = "suspended";
+            if (whatsappStatus === "connected") {
+              client.sendMessage(`${customer.phone}@c.us`, `⚠️ Atenção ${customer.name}!\n\nSua internet foi suspensa por falta de pagamento. Para reativar, envie o comprovante.`);
+            }
+          }
+          await mk.close();
+        } catch (err) { console.error(`Erro ao suspender ${customer.name}:`, err); }
+      }
+    }
+    fs.writeFileSync(CUSTOMERS_FILE, JSON.stringify(customers, null, 2));
+  });
 
   // Funções de persistência
   const readDevices = () => {
@@ -65,6 +195,70 @@ async function startServer() {
     devices = devices.filter((d: any) => d.id !== req.params.id);
     saveDevices(devices);
     res.json({ success: true });
+  });
+
+  // ==========================================
+  // ROTAS FINANCEIRO E WHATSAPP
+  // ==========================================
+
+  app.get("/api/whatsapp/status", async (req, res) => {
+    let qrImage = "";
+    if (whatsappQr) qrImage = await qrcode.toDataURL(whatsappQr);
+    res.json({ status: whatsappStatus, qr: qrImage });
+  });
+
+  app.get("/api/settings", (req, res) => {
+    res.json(JSON.parse(fs.readFileSync(SETTINGS_FILE, "utf8")));
+  });
+
+  app.post("/api/settings", (req, res) => {
+    fs.writeFileSync(SETTINGS_FILE, JSON.stringify(req.body, null, 2));
+    res.json({ success: true });
+  });
+
+  app.get("/api/customers", (req, res) => {
+    res.json(JSON.parse(fs.readFileSync(CUSTOMERS_FILE, "utf8")));
+  });
+
+  app.post("/api/customers", (req, res) => {
+    const customers = JSON.parse(fs.readFileSync(CUSTOMERS_FILE, "utf8"));
+    const newCustomer = { ...req.body, id: Date.now().toString(), status: "pending" };
+    customers.push(newCustomer);
+    fs.writeFileSync(CUSTOMERS_FILE, JSON.stringify(customers, null, 2));
+    res.json(newCustomer);
+  });
+
+  app.delete("/api/customers/:id", (req, res) => {
+    let customers = JSON.parse(fs.readFileSync(CUSTOMERS_FILE, "utf8"));
+    customers = customers.filter((c: any) => c.id !== req.params.id);
+    fs.writeFileSync(CUSTOMERS_FILE, JSON.stringify(customers, null, 2));
+    res.json({ success: true });
+  });
+
+  app.post("/api/customers/:id/pay", async (req, res) => {
+    const customers = JSON.parse(fs.readFileSync(CUSTOMERS_FILE, "utf8"));
+    const customer = customers.find((c: any) => c.id === req.params.id);
+    const devices = readDevices();
+    if (customer && devices.length > 0) {
+      const config = devices[0];
+      customer.status = "paid";
+      const mk = new RouterOSAPI({ host: config.host, user: config.user, password: config.password, port: parseInt(config.port) });
+      try {
+        await mk.connect();
+        const users = await mk.write(["/ip/hotspot/user/print", `?name=${customer.mikrotikUser}`]);
+        if (users.length > 0) {
+          await mk.write(["/ip/hotspot/user/set", `=.id=${users[0]['.id']}`, "=disabled=no"]);
+        }
+        await mk.close();
+        if (whatsappStatus === "connected") {
+          client.sendMessage(`${customer.phone}@c.us`, `✅ Obrigado ${customer.name}!\n\nSeu pagamento foi confirmado e sua internet já está ativa.`);
+        }
+      } catch (err) { console.error("Erro ao reativar:", err); }
+      fs.writeFileSync(CUSTOMERS_FILE, JSON.stringify(customers, null, 2));
+      res.json({ success: true });
+    } else {
+      res.status(404).json({ error: "Cliente ou RB não encontrada" });
+    }
   });
 
   // ==========================================
